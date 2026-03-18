@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM Slope & EL Automation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+header{background:rgba(15,23,42,.9);border-bottom:1px solid #1e293b;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+header h1{font-size:18px;color:#fff}
+header p{font-size:12px;color:#94a3b8}
+.btn{padding:6px 14px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#0891b2;color:#fff}.btn-primary:hover{background:#06b6d4}
+.btn-secondary{background:#334155;color:#e2e8f0}.btn-secondary:hover{background:#475569}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.layout{display:flex;max-width:1400px;margin:0 auto}
+nav{width:220px;min-height:calc(100vh - 56px);border-right:1px solid #1e293b;background:rgba(15,23,42,.5);padding:12px;flex-shrink:0}
+nav .label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.step-btn{width:100%;text-align:left;padding:8px 12px;border-radius:6px;border:1px solid transparent;background:none;color:#94a3b8;font-size:13px;cursor:pointer;margin-bottom:4px;transition:.2s}
+.step-btn:hover{color:#e2e8f0;background:#1e293b}
+.step-btn.active{background:rgba(8,145,178,.15);color:#22d3ee;border-color:rgba(8,145,178,.4)}
+.step-btn .ko{font-size:11px;opacity:.6;display:block}
+main{flex:1;padding:16px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;gap:16px}
+.empty-state h2{font-size:20px;color:#64748b}
+.content-area{display:flex;gap:16px}
+.canvas-wrap{flex-shrink:0}
+canvas{border-radius:8px;border:1px solid #1e293b;cursor:crosshair}
+.panel{flex:1;min-width:0}
+.panel h2{font-size:17px;font-weight:700;color:#fff;margin-bottom:2px}
+.panel .subtitle{font-size:13px;color:#64748b;margin-bottom:12px}
+.panel .desc{font-size:13px;color:#94a3b8;margin-bottom:12px}
+.error-box{background:rgba(127,29,29,.3);border:1px solid rgba(185,28,28,.5);border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;color:#fca5a5}
+table{width:100%;border-collapse:collapse;font-size:13px}
+table th{text-align:left;padding:8px 12px;background:#1e293b;color:#94a3b8;font-weight:500}
+table td{padding:6px 12px;border-top:1px solid rgba(30,41,59,.5)}
+.mono{font-family:'Cascadia Code','Fira Code',monospace}
+.cyan{color:#22d3ee}
+.result-card{display:flex;justify-content:space-between;align-items:center;background:rgba(30,41,59,.5);border:1px solid #334155;border-radius:8px;padding:8px 14px;margin-bottom:6px}
+.result-card .label{font-size:13px;color:#94a3b8}
+.result-card .value{font-size:13px;font-family:monospace;color:#e2e8f0}
+.result-card .value.highlight{color:#22d3ee;font-weight:700;font-size:15px}
+.arrow-info{background:rgba(8,145,178,.1);border:1px solid rgba(8,145,178,.3);border-radius:8px;padding:10px;margin-top:8px;font-size:13px;color:#67e8f9}
+.path-card{background:rgba(30,41,59,.3);border:1px solid #334155;border-radius:8px;padding:10px;margin-bottom:6px}
+.path-card h4{font-size:14px;color:#fff;margin-bottom:4px}
+.path-card .stats{display:flex;gap:20px;font-size:12px;color:#94a3b8}
+.band-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+.band-color{width:16px;height:16px;border-radius:3px;flex-shrink:0}
+.compliance-check{display:flex;align-items:flex-start;gap:8px;padding:8px;background:rgba(30,41,59,.3);border-radius:6px;margin-bottom:6px;font-size:13px}
+.compliance-check .icon{font-size:18px;flex-shrink:0}
+.pass{color:#4ade80}.fail{color:#f87171}
+.warn-box{background:rgba(120,113,0,.15);border:1px solid rgba(202,138,4,.3);border-radius:8px;padding:10px;margin-top:8px}
+.warn-box h4{font-size:13px;color:#fbbf24;margin-bottom:4px}
+.warn-box li{font-size:12px;color:rgba(251,191,36,.8);margin-left:16px}
+.reg-card{background:rgba(30,41,59,.5);border:1px solid #334155;border-radius:6px;padding:8px;margin-bottom:6px}
+.reg-card .title{font-size:13px;font-weight:500;color:#22d3ee}
+.reg-card .ko{font-size:12px;color:#94a3b8}
+.reg-card .desc{font-size:11px;color:#64748b;margin-top:2px}
+.platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.platform-card{text-align:left;padding:8px;border-radius:8px;border:1px solid #334155;background:rgba(30,41,59,.3);color:#94a3b8;cursor:pointer;transition:.2s;font-size:13px}
+.platform-card:hover{color:#e2e8f0}
+.platform-card.active{border-color:#06b6d4;background:rgba(8,145,178,.15);color:#22d3ee}
+.platform-card .lang{font-size:11px;opacity:.6}
+.code-block{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;max-height:280px;overflow:auto;margin-bottom:8px}
+.code-block pre{font-size:11px;font-family:'Cascadia Code','Fira Code',monospace;color:#86efac;white-space:pre-wrap}
+.instructions{background:rgba(30,41,59,.5);border:1px solid #334155;border-radius:8px;padding:10px}
+.instructions h4{font-size:13px;color:#e2e8f0;margin-bottom:4px}
+.instructions ol{font-size:12px;color:#94a3b8;padding-left:20px}
+.instructions li{margin-bottom:2px}
+.form-row{margin-bottom:8px}
+.form-row label{display:block;font-size:11px;color:#64748b;margin-bottom:4px}
+.form-row select,.form-row input{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:13px;width:100%}
+.checkbox-label{display:flex;align-items:center;gap:6px;font-size:13px;color:#94a3b8;cursor:pointer}
+.checkbox-label input{accent-color:#0891b2}
+.ml-auto{margin-left:auto}
+.flex{display:flex}.gap-2{gap:8px}.gap-3{gap:12px}.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mt-2{margin-top:8px}
+.scroll-box{max-height:250px;overflow-y:auto;padding-right:4px}
+.canvas-note{font-size:11px;color:#64748b;margin-top:4px;padding-left:4px}
+</style>
+</head>
+<body>
+<header>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+<div>
+<h1>BIM Slope & EL Automation</h1>
+<p>경사도 산출 및 표고(EL) 유도 자동화 시스템</p>
+</div>
+<div class="ml-auto">
+<button class="btn btn-primary" id="btnLoadSurface" onclick="loadSampleSurface()">&#9696; Load Sample Surface</button>
+</div>
+</header>
+<div class="layout">
+<nav>
+<div class="label">Workflow Steps</div>
+<div id="stepNav"></div>
+</nav>
+<main id="mainContent">
+<div class="empty-state" id="emptyState">
+<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+<h2>No Surface Loaded</h2>
+<p style="color:#64748b;font-size:14px">Click "Load Sample Surface" to generate a terrain</p>
+<button class="btn btn-primary" onclick="loadSampleSurface()" style="padding:10px 20px;font-size:15px">&#9696; Generate Sample Terrain</button>
+</div>
+</main>
+</div>
+
+<script>
+// ============================================================
+// 유틸리티 함수 (Utility Functions)
+// ============================================================
+// HTML 특수문자 치환 함수 (보안 및 화면 깨짐 방지)
+function escapeHTML(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function rc(label,value,highlight){
+  return `<div class="result-card"><span class="label">${label}</span><span class="value${highlight?' highlight':''}">${value}</span></div>`;
+}
+
+// ============================================================
+// 딜로니 삼각분할 (DELAUNAY TRIANGULATION - Bowyer-Watson algorithm)
+// ============================================================
+function delaunayTriangulate(points2d) {
+  const n = points2d.length;
+  if (n < 3) return [];
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(let i=0;i<n;i++){
+    if(points2d[i][0]<minX)minX=points2d[i][0];
+    if(points2d[i][1]<minY)minY=points2d[i][1];
+    if(points2d[i][0]>maxX)maxX=points2d[i][0];
+    if(points2d[i][1]>maxY)maxY=points2d[i][1];
+  }
+  const dx=maxX-minX,dy=maxY-minY,dmax=Math.max(dx,dy),midx=(minX+maxX)/2,midy=(minY+maxY)/2;
+  const p0=[midx-20*dmax,midy-dmax],p1=[midx+20*dmax,midy-dmax],p2=[midx,midy+20*dmax];
+  const pts=[...points2d,p0,p1,p2];
+  const st={v:[n,n+1,n+2]};
+  computeCircum(st,pts);
+  let triangles=[st];
+
+  for(let i=0;i<n;i++){
+    const px=pts[i][0],py=pts[i][1];
+    let edges=[];
+    triangles=triangles.filter(t=>{
+      if(px===undefined)return true;
+      const ddx=px-t.cx,ddy=py-t.cy;
+      if(ddx*ddx+ddy*ddy<t.r2){
+        edges.push([t.v[0],t.v[1]],[t.v[1],t.v[2]],[t.v[2],t.v[0]]);
+        return false;
+      }
+      return true;
+    });
+    for(let j=edges.length-1;j>=0;j--){
+      for(let k=j-1;k>=0;k--){
+        if((edges[j][0]===edges[k][1]&&edges[j][1]===edges[k][0])||
+           (edges[j][0]===edges[k][0]&&edges[j][1]===edges[k][1])){
+          edges.splice(j,1);edges.splice(k,1);j--;break;
+        }
+      }
+    }
+    for(const e of edges){
+      const nt={v:[e[0],e[1],i]};
+      computeCircum(nt,pts);
+      triangles.push(nt);
+    }
+  }
+  return triangles.filter(t=>t.v[0]<n&&t.v[1]<n&&t.v[2]<n).map(t=>t.v);
+}
+
+function computeCircum(t,pts){
+  const ax=pts[t.v[0]][0],ay=pts[t.v[0]][1];
+  const bx=pts[t.v[1]][0],by=pts[t.v[1]][1];
+  const cx=pts[t.v[2]][0],cy=pts[t.v[2]][1];
+  const D=2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
+  if(Math.abs(D)<1e-12){t.cx=ax;t.cy=ay;t.r2=Infinity;return;}
+  const ux=((ax*ax+ay*ay)*(by-cy)+(bx*bx+by*by)*(cy-ay)+(cx*cx+cy*cy)*(ay-by))/D;
+  const uy=((ax*ax+ay*ay)*(cx-bx)+(bx*bx+by*by)*(ax-cx)+(cx*cx+cy*cy)*(bx-ax))/D;
+  t.cx=ux;t.cy=uy;
+  t.r2=(ax-ux)*(ax-ux)+(ay-uy)*(ay-uy);
+}
+
+// ============================================================
+// 지표면 클래스 (TIN SURFACE CLASS)
+// ============================================================
+class TINSurface {
+  constructor(points) {
+    this.points = points;
+    this.pts2d = points.map(p=>[p.x,p.y]);
+    this.triangles = delaunayTriangulate(this.pts2d);
+    this._buildNeighbors();
+  }
+
+  _buildNeighbors() {
+    this.triNeighbors = new Array(this.triangles.length).fill(null).map(()=>[]);
+    const edgeMap = {};
+    for(let i=0;i<this.triangles.length;i++){
+      const t=this.triangles[i];
+      const edges=[[t[0],t[1]],[t[1],t[2]],[t[2],t[0]]];
+      for(const e of edges){
+        const key=Math.min(e[0],e[1])+'_'+Math.max(e[0],e[1]);
+        if(edgeMap[key]!==undefined){
+          this.triNeighbors[i].push(edgeMap[key]);
+          this.triNeighbors[edgeMap[key]].push(i);
+        } else {
+          edgeMap[key]=i;
+        }
+      }
+    }
+  }
+
+  findTriangle(x, y) {
+    for(let i=0;i<this.triangles.length;i++){
+      const t=this.triangles[i];
+      const p0=this.points[t[0]],p1=this.points[t[1]],p2=this.points[t[2]];
+      if(this._pointInTri(x,y,p0,p1,p2)) return i;
+    }
+    return -1;
+  }
+
+  _pointInTri(px,py,a,b,c){
+    const d=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);
+    if(Math.abs(d)<1e-10)return false;
+    const u=((b.y-c.y)*(px-c.x)+(c.x-b.x)*(py-c.y))/d;
+    const v=((c.y-a.y)*(px-c.x)+(a.x-c.x)*(py-c.y))/d;
+    const w=1-u-v;
+    return u>=-0.001&&v>=-0.001&&w>=-0.001;
+  }
+
+  getElevation(x, y) {
+    const idx = this.findTriangle(x, y);
+    if(idx===-1) return null;
+    const t=this.triangles[idx];
+    const p0=this.points[t[0]],p1=this.points[t[1]],p2=this.points[t[2]];
+    const bary = this._baryCoords(x,y,p0,p1,p2);
+    if(!bary) return null;
+    return Math.round((bary[0]*p0.z + bary[1]*p1.z + bary[2]*p2.z)*1000)/1000;
+  }
+
+  _baryCoords(px,py,p0,p1,p2){
+    const v0x=p2.x-p0.x,v0y=p2.y-p0.y;
+    const v1x=p1.x-p0.x,v1y=p1.y-p0.y;
+    const v2x=px-p0.x,v2y=py-p0.y;
+    const d00=v0x*v0x+v0y*v0y;
+    const d01=v0x*v1x+v0y*v1y;
+    const d02=v0x*v2x+v0y*v2y;
+    const d11=v1x*v1x+v1y*v1y;
+    const d12=v1x*v2x+v1y*v2y;
+    const denom=d00*d11-d01*d01;
+    if(Math.abs(denom)<1e-10)return null;
+    const inv=1/denom;
+    const u=(d11*d02-d01*d12)*inv;
+    const v=(d00*d12-d01*d02)*inv;
+    return [1-u-v, v, u];
+  }
+
+  calculateSlope(ax,ay,bx,by,use3d=false){
+    const zA=this.getElevation(ax,ay), zB=this.getElevation(bx,by);
+    if(zA===null||zB===null) return null;
+    const dx=bx-ax,dy=by-ay,dz=zB-zA;
+    const hDist=Math.sqrt(dx*dx+dy*dy);
+    const d3d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(hDist<1e-10) return null;
+    const run=use3d?d3d:hDist;
+    const slopePct=(dz/run)*100;
+    const slopeDeg=Math.atan2(dz,run)*180/Math.PI;
+    const ratioVal=Math.abs(dz)>1e-10?run/Math.abs(dz):Infinity;
+    const ratio=ratioVal===Infinity?"1:INF (flat)":`1:${ratioVal.toFixed(1)}`;
+    const arrowAngle=slopePct<=0?0:Math.PI;
+    let dir;
+    if(dz<0) dir=`Downhill from A(EL:${zA.toFixed(2)}) to B(EL:${zB.toFixed(2)})`;
+    else if(dz>0) dir=`Uphill from A(EL:${zA.toFixed(2)}) to B(EL:${zB.toFixed(2)})`;
+    else dir=`Flat between A(EL:${zA.toFixed(2)}) and B(EL:${zB.toFixed(2)})`;
+    return {
+      point_a:{x:ax,y:ay,z:zA},point_b:{x:bx,y:by,z:zB},
+      horizontal_distance_2d:Math.round(hDist*1000)/1000,
+      distance_3d:Math.round(d3d*1000)/1000,
+      elevation_difference:Math.round(dz*1000)/1000,
+      slope_percentage:Math.round(slopePct*1000)/1000,
+      slope_ratio:ratio,slope_degrees:Math.round(slopeDeg*1000)/1000,
+      direction_arrow_angle:Math.round(arrowAngle*1000)/1000,direction:dir
+    };
+  }
+
+  _computeGradient(x,y){
+    const idx=this.findTriangle(x,y);
+    if(idx===-1)return null;
+    const t=this.triangles[idx];
+    const p0=this.points[t[0]],p1=this.points[t[1]],p2=this.points[t[2]];
+    const v1x=p1.x-p0.x,v1y=p1.y-p0.y,v1z=p1.z-p0.z;
+    const v2x=p2.x-p0.x,v2y=p2.y-p0.y,v2z=p2.z-p0.z;
+    const nx=v1y*v2z-v1z*v2y, ny=v1z*v2x-v1x*v2z, nz=v1x*v2y-v1y*v2x;
+    if(Math.abs(nz)<1e-10) return null;
+    return [-nx/nz, -ny/nz];
+  }
+
+  traceWaterDrop(sx,sy,maxSteps=500,stepSize=1.0){
+    const zStart=this.getElevation(sx,sy);
+    if(zStart===null)return null;
+    const path=[{x:sx,y:sy,z:zStart}];
+    let cx=sx,cy=sy,totalLen=0;
+    for(let i=0;i<maxSteps;i++){
+      const grad=this._computeGradient(cx,cy);
+      if(!grad)break;
+      const mag=Math.sqrt(grad[0]**2+grad[1]**2);
+      if(mag<1e-6)break;
+      const mx=-grad[0]/mag*stepSize, my=-grad[1]/mag*stepSize;
+      const nx=cx+mx, ny=cy+my, nz=this.getElevation(nx,ny);
+      if(nz===null||nz>=path[path.length-1].z)break;
+      const segLen=Math.sqrt(mx**2+my**2+(nz-path[path.length-1].z)**2);
+      totalLen+=segLen;
+      path.push({x:Math.round(nx*1000)/1000,y:Math.round(ny*1000)/1000,z:Math.round(nz*1000)/1000});
+      cx=nx;cy=ny;
+    }
+    return {path,total_length:Math.round(totalLen*1000)/1000,elevation_drop:Math.round((path[0].z-path[path.length-1].z)*1000)/1000};
+  }
+
+  analyzeSurface(numElevBands=4,numSlopeBands=5){
+    const allZ=this.points.map(p=>p.z);
+    const minZ=Math.min(...allZ),maxZ=Math.max(...allZ);
+    const elevColors=["#2166ac","#67a9cf","#d1e5f0","#fddbc7","#ef8a62","#b2182b"];
+    const slopeColors=["#1a9850","#91cf60","#d9ef8b","#fee08b","#fc8d59","#d73027"];
+    const elevStep=(maxZ-minZ)/numElevBands||1;
+    const elevBands=[];
+    for(let i=0;i<numElevBands;i++){
+      const bMin=minZ+i*elevStep,bMax=minZ+(i+1)*elevStep;
+      let count=0,area=0;
+      for(const t of this.triangles){
+        const avgZ=(this.points[t[0]].z+this.points[t[1]].z+this.points[t[2]].z)/3;
+        if(avgZ>=bMin&&(avgZ<bMax||(i===numElevBands-1&&avgZ===bMax))){count++;area+=this._triArea3d(t);}
+      }
+      elevBands.push({min_elevation:Math.round(bMin*100)/100,max_elevation:Math.round(bMax*100)/100,color:elevColors[i%elevColors.length],area:Math.round(area*100)/100,triangle_count:count});
+    }
+    const triSlopes=this.triangles.map(t=>this._triSlopeDeg(t));
+    const minSlope=Math.min(...triSlopes),maxSlope=Math.max(...triSlopes);
+    const slopeStep=(maxSlope-minSlope)/numSlopeBands||1;
+    const slopeBands=[];
+    for(let i=0;i<numSlopeBands;i++){
+      const bMin=minSlope+i*slopeStep,bMax=minSlope+(i+1)*slopeStep;
+      let count=0,area=0;
+      for(let j=0;j<this.triangles.length;j++){
+        const s=triSlopes[j];
+        if(s>=bMin&&(s<bMax||(i===numSlopeBands-1&&s===bMax))){count++;area+=this._triArea3d(this.triangles[j]);}
+      }
+      slopeBands.push({min_slope:Math.round(bMin*100)/100,max_slope:Math.round(bMax*100)/100,color:slopeColors[i%slopeColors.length],area:Math.round(area*100)/100,triangle_count:count});
+    }
+    const slopeArrows=[];
+    for(let j=0;j<this.triangles.length;j++){
+      const t=this.triangles[j];
+      const p0=this.points[t[0]],p1=this.points[t[1]],p2=this.points[t[2]];
+      const cx=(p0.x+p1.x+p2.x)/3, cy=(p0.y+p1.y+p2.y)/3, cz=(p0.z+p1.z+p2.z)/3;
+      const grad=this._computeGradient(cx,cy);
+      let ddx=0,ddy=0;
+      if(grad){const m=Math.sqrt(grad[0]**2+grad[1]**2);if(m>1e-6){ddx=-grad[0]/m;ddy=-grad[1]/m;}}
+      const ci=Math.min(Math.floor(triSlopes[j]/(slopeStep||1)),numSlopeBands-1);
+      slopeArrows.push({centroid:{x:Math.round(cx*1000)/1000,y:Math.round(cy*1000)/1000,z:Math.round(cz*1000)/1000},slope_degrees:Math.round(triSlopes[j]*100)/100,direction_x:Math.round(ddx*10000)/10000,direction_y:Math.round(ddy*10000)/10000,color:slopeColors[ci%slopeColors.length]});
+    }
+    const totalArea=this.triangles.reduce((s,t)=>s+this._triArea3d(t),0);
+    return {elevation_bands:elevBands,slope_bands:slopeBands,slope_arrows:slopeArrows,statistics:{total_area:Math.round(totalArea*100)/100,min_elevation:Math.round(minZ*100)/100,max_elevation:Math.round(maxZ*100)/100,elevation_range:Math.round((maxZ-minZ)*100)/100,min_slope_degrees:Math.round(minSlope*100)/100,max_slope_degrees:Math.round(maxSlope*100)/100,avg_slope_degrees:Math.round(triSlopes.reduce((a,b)=>a+b,0)/triSlopes.length*100)/100,total_triangles:this.triangles.length,total_points:this.points.length}};
+  }
+
+  delineateCatchment(px,py){
+    const pz=this.getElevation(px,py);
+    if(pz===null)return null;
+    const startIdx=this.findTriangle(px,py);
+    if(startIdx===-1)return null;
+    const visited=new Set([startIdx]),queue=[startIdx],contributing=new Set([startIdx]);
+    while(queue.length>0){
+      const cur=queue.shift();
+      for(const nb of this.triNeighbors[cur]){
+        if(nb===-1||visited.has(nb))continue;
+        visited.add(nb);
+        const t=this.triangles[nb];
+        const cz=(this.points[t[0]].z+this.points[t[1]].z+this.points[t[2]].z)/3;
+        const ct=this.triangles[cur];
+        const curZ=(this.points[ct[0]].z+this.points[ct[1]].z+this.points[ct[2]].z)/3;
+        if(cz>=curZ){
+          const cx=(this.points[t[0]].x+this.points[t[1]].x+this.points[t[2]].x)/3;
+          const cy=(this.points[t[0]].y+this.points[t[1]].y+this.points[t[2]].y)/3;
+          const g=this._computeGradient(cx,cy);
+          if(g){contributing.add(nb);queue.push(nb);}
+        }
+      }
+    }
+    const boundaryPts=[],elevs=[];let totalArea=0;
+    const seen=new Set();
+    for(const ti of contributing){
+      const t=this.triangles[ti];
+      totalArea+=this._triArea3d(t);
+      for(const idx of t){
+        const p=this.points[idx];elevs.push(p.z);
+        const key=`${p.x}_${p.y}_${p.z}`;
+        if(!seen.has(key)){seen.add(key);boundaryPts.push({x:p.x,y:p.y,z:p.z});}
+      }
+    }
+    if(!elevs.length)return null;
+    const slopeVals=[...contributing].map(ti=>this._triSlopeDeg(this.triangles[ti]));
+    return {pour_point:{x:px,y:py,z:pz},boundary_points:boundaryPts,area:Math.round(totalArea*100)/100,avg_slope:slopeVals.length?Math.round(slopeVals.reduce((a,b)=>a+b,0)/slopeVals.length*100)/100:0,max_elevation:Math.round(Math.max(...elevs)*100)/100,min_elevation:Math.round(Math.min(...elevs)*100)/100};
+  }
+
+  _triArea3d(t){
+    const p0=this.points[t[0]],p1=this.points[t[1]],p2=this.points[t[2]];
+    const v1x=p1.x-p0.x,v1y=p1.y-p0.y,v1z=p1.z-p0.z;
+    const v2x=p2.x-p0.x,v2y=p2.y-p0.y,v2z=p2.z-p0.z;
+    const cx=v1y*v2z-v1z*v2y,cy=v1z*v2x-v1x*v2z,cz=v1x*v2y-v1y*v2x;
+    return 0.5*Math.sqrt(cx*cx+cy*cy+cz*cz);
+  }
+
+  _triSlopeDeg(t){
+    const p0=this.points[t[0]],p1=this.points[t[1]],p2=this.points[t[2]];
+    const v1x=p1.x-p0.x,v1y=p1.y-p0.y,v1z=p1.z-p0.z;
+    const v2x=p2.x-p0.x,v2y=p2.y-p0.y,v2z=p2.z-p0.z;
+    const nx=v1y*v2z-v1z*v2y,ny=v1z*v2x-v1x*v2z,nz=v1x*v2y-v1y*v2x;
+    const mag=Math.sqrt(nx*nx+ny*ny+nz*nz);
+    if(mag<1e-10)return 0;
+    const cosA=Math.min(Math.abs(nz/mag),1);
+    return Math.acos(cosA)*180/Math.PI;
+  }
+}
+
+// ============================================================
+// 샘플 지형 생성 (SAMPLE SURFACE GENERATOR)
+// ============================================================
+function generateSampleSurface(){
+  const points=[];
+  for(let i=0;i<20;i++){
+    for(let j=0;j<20;j++){
+      const x=i*10;const y=j*10;
+      let z=50+5*Math.sin(x/30)*Math.cos(y/40)+3*Math.cos((x+y)/25);
+      z+=2*Math.sin(x/15)*Math.sin(y/20);
+      z+=(Math.random()-0.5)*2;
+      points.push({x:Math.round(x*100)/100,y:Math.round(y*100)/100,z:Math.round(z*100)/100});
+    }
+  }
+  return {name:"SampleTerrain",points};
+}
+
+// ============================================================
+// 법규 데이터 (REGULATION DATA)
+// ============================================================
+const REGULATIONS=[
+  {id:"KR-KBIMS-001",category:"korea_kbims",title:"Korea BIM Standard (KBIMS) - Surface Analysis Requirements",title_ko:"한국 BIM 표준 (KBIMS) - 지표면 분석 요구사항",description:"Mandates BIM-based terrain analysis for public projects over 50B KRW.",requirements:["TIN surface model with minimum LOD 200","Slope analysis with color-coded bands","Elevation labels with dynamic linking","Water drop analysis for drainage verification","Cut/Fill volume calculation"]},
+  {id:"KR-SMART-001",category:"korea_smart",title:"Smart Construction 2030 Roadmap - Digital Terrain",title_ko:"스마트건설 2030 로드맵 - 디지털 지형",description:"MOLIT roadmap requiring full BIM-based design by 2030.",requirements:["3D terrain model from survey data","Automated slope and elevation extraction","Digital drainage analysis","IFC export with terrain data","Cloud-based model sharing"]},
+  {id:"INT-ISO19650-001",category:"iso_19650",title:"ISO 19650:2026 - BIM Information Management",title_ko:"ISO 19650:2026 - BIM 정보 관리",description:"International standard for BIM information management.",requirements:["Information delivery planning","Level of Information Need specification","CDE for surface model sharing","Asset information model","Digital twin integration"]},
+  {id:"SG-CORENET-001",category:"singapore_corenet_x",title:"CORENET X - Automated Model Checking",title_ko:"CORENET X - 자동 모델 검토",description:"Singapore BCA mandatory IFC-SG submission with automated compliance.",requirements:["IFC-SG format submission","Slope gradient as IFC property","Max 50mm step at entrances","Drainage gradient min 1:80","Model Checker validation"]},
+  {id:"US-NBIMS-001",category:"usa_nbims_v4",title:"NBIMS-US V4 - National BIM Standard",title_ko:"NBIMS-US V4 - 국가 BIM 표준",description:"US national BIM standard V4 with modular PBR/BEP framework.",requirements:["PBR for terrain scope","BEP for surface analysis","COBie data structure","Elevation and slope attributes","Facility management data"]},
+  {id:"KR-DRAIN-001",category:"drainage_standards",title:"Korean Drainage Design Standards",title_ko:"한국 배수 설계 기준",description:"Minimum slope requirements for Korean civil engineering.",requirements:["General surface: min 1.0%","Road surface: min 1.5% cross-slope","Parking lot: min 1.0%","Walkway: max 8.0% longitudinal","Barrier-free ramp: max 8.33%","Pipe drainage: min 0.5%","Building perimeter: min 2.0%"]}
+];
+
+function checkCompliance(slopePct, surfaceType, country){
+  const slope=Math.abs(slopePct);
+  const checks=[],regs=[],recs=[];
+  let compliant=true;
+  if(country==="korea"||country==="all"){
+    regs.push("KR-DRAIN-001");
+    if(surfaceType==="general"){const p=slope>=1;checks.push({rule:"General surface drainage minimum slope",required:">= 1.0%",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Increase slope from ${slope.toFixed(2)}% to at least 1.0%.`);}}
+    else if(surfaceType==="road"){const p=slope>=1.5;checks.push({rule:"Road surface minimum cross-slope",required:">= 1.5%",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Increase road cross-slope from ${slope.toFixed(2)}% to at least 1.5%.`);}}
+    else if(surfaceType==="barrier_free"){const p=slope<=8.33;checks.push({rule:"Barrier-free ramp maximum slope",required:"<= 8.33% (1:12)",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Reduce ramp slope from ${slope.toFixed(2)}% to maximum 8.33%.`);}}
+    else if(surfaceType==="drainage"){const p=slope>=0.5;checks.push({rule:"Pipe drainage minimum slope",required:">= 0.5%",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Increase pipe slope from ${slope.toFixed(2)}% to at least 0.5%.`);}}
+  }
+  if(country==="singapore"||country==="all"){
+    regs.push("SG-CORENET-001");
+    if(surfaceType==="general"||surfaceType==="drainage"){const p=slope>=1.25;checks.push({rule:"CORENET X surface drainage minimum",required:">= 1.25%",actual:slope.toFixed(2)+"%",passed:p,standard:"SG-CORENET-001"});if(!p){compliant=false;recs.push("Increase slope to >= 1.25% for CORENET X.");}}
+    if(surfaceType==="barrier_free"){const p=slope<=5;checks.push({rule:"CORENET X barrier-free max slope",required:"<= 5.0%",actual:slope.toFixed(2)+"%",passed:p,standard:"SG-CORENET-001"});if(!p){compliant=false;recs.push("Reduce slope to <= 5.0% per Singapore BCA.");}}
+  }
+  if(country==="usa"||country==="all"){regs.push("US-NBIMS-001");checks.push({rule:"NBIMS-US V4 terrain data in COBie",required:"Slope documented",actual:slope.toFixed(2)+"% documented",passed:true,standard:"US-NBIMS-001"});}
+  if(country==="international"||country==="all"){regs.push("INT-ISO19650-001");checks.push({rule:"ISO 19650 information delivery",required:"Slope in CDE",actual:slope.toFixed(2)+"% recorded",passed:true,standard:"INT-ISO19650-001"});}
+  if(!recs.length) recs.push("All applicable slope requirements are met.");
+  return {is_compliant:compliant,checks,applicable_regulations:regs,recommendations:recs};
+}
+
+// ============================================================
+// 스크립트 생성기 (SCRIPT GENERATION)
+// ============================================================
+const SCRIPT_TEMPLATES={
+dynamo:{name:"Dynamo (Revit)",language:"Python (IronPython/CPython3)",ext:".dyn.py",
+code:(sn)=>`# Dynamo Python Script Node
+# BIM Slope & EL Automation - Steps 1-6
+# Surface: ${sn}
+
+import clr
+clr.AddReference("RevitAPI")
+clr.AddReference("RevitServices")
+clr.AddReference("ProtoGeometry")
+
+from Autodesk.DesignScript.Geometry import *
+from RevitServices.Persistence import DocumentManager
+from RevitServices.Transactions import TransactionManager
+import math
+
+doc = DocumentManager.Instance.CurrentDBDocument
+
+# Step 1: Extract Elevation Points
+def get_surface_elevation(surface, point):
+    try:
+        projected = surface.ProjectPoint(point)
+        return projected.Z
+    except:
+        return None
+
+# Step 2: Calculate Slope Between Two Points
+def calculate_slope(pt_a, pt_b, use_3d=False):
+    dx = pt_b.X - pt_a.X
+    dy = pt_b.Y - pt_a.Y
+    dz = pt_b.Z - pt_a.Z
+    h_dist = math.sqrt(dx**2 + dy**2)
+    run = math.sqrt(dx**2 + dy**2 + dz**2) if use_3d else h_dist
+    if run < 0.001: return None
+    return {"slope_pct": round((dz/run)*100, 3), "slope_deg": round(math.degrees(math.atan2(dz, run)), 3)}
+
+OUT = {"status": "Script ready for execution", "surface": "${sn}"}`,
+instructions:["1. Open Dynamo in Revit (Manage > Dynamo)","2. Create a new Dynamo script","3. Add a 'Python Script' node","4. Paste the generated code","5. Connect surface and point inputs","6. Run the script"]},
+
+revit_csharp:{name:"Revit C# Add-in",language:"C#",ext:".cs",
+code:(sn)=>`// BIM Slope & EL Automation - Revit C# Add-in
+// Surface: ${sn}
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.Attributes;
+
+namespace BIMSlopeELAutomation
+{
+    [Transaction(TransactionMode.Manual)]
+    public class SlopeELCommand : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            Document doc = commandData.Application.ActiveUIDocument.Document;
+            TopographySurface topo = new FilteredElementCollector(doc)
+                .OfClass(typeof(TopographySurface)).FirstElement() as TopographySurface;
+            if (topo == null) { TaskDialog.Show("Error", "No topography surface found."); return Result.Failed; }
+
+            // Step 1: Extract elevations
+            IList<XYZ> pts = topo.GetPoints();
+            
+            // Step 2: Calculate slope
+            double CalcSlope(XYZ a, XYZ b) {
+                double h = Math.Sqrt(Math.Pow(b.X-a.X,2)+Math.Pow(b.Y-a.Y,2));
+                return h > 0.001 ? ((b.Z-a.Z)/h)*100 : 0;
+            }
+            
+            TaskDialog.Show("BIM Slope & EL", $"Surface: {pts.Count} points\\nMin EL: {pts.Min(p=>p.Z):F2}\\nMax EL: {pts.Max(p=>p.Z):F2}");
+            return Result.Succeeded;
+        }
+    }
+}`,
+instructions:["1. Create C# Class Library in Visual Studio","2. Add RevitAPI.dll, RevitAPIUI.dll references","3. Paste the generated code","4. Build the project"]},
+
+civil3d_python:{name:"Civil 3D Python",language:"Python",ext:".py",
+code:(sn)=>`# Civil 3D Python Automation Script
+# Surface: ${sn}
+
+import math
+try:
+    import win32com.client
+    acad = win32com.client.Dispatch("AutoCAD.Application")
+    doc = acad.ActiveDocument
+    CIVIL3D = True
+except: CIVIL3D = False
+
+class SlopeELAutomation:
+    def __init__(self, surface_name="${sn}"):
+        self.surface_name = surface_name
+        self.surface = None
+        if CIVIL3D: self._connect()
+    
+    def _connect(self):
+        civil = doc.GetInterfaceObject("AeccXUiLand.AeccApplication")
+        self.surface = civil.ActiveDocument.Surfaces.Item(self.surface_name)
+    
+    # Step 1: Elevation
+    def get_elevation(self, x, y):
+        if self.surface: return round(self.surface.FindElevationAtXY(x, y), 3)
+
+auto = SlopeELAutomation()
+print(f"Connected to surface: {auto.surface_name}")`,
+instructions:["1. Install pyautocad: pip install pyautocad","2. Open Civil 3D with a surface model","3. Run the script via Python console"]},
+
+civil3d_csharp:{name:"Civil 3D C#",language:"C#",ext:".cs",
+code:(sn)=>`// Civil 3D C# Plugin - BIM Slope & EL Automation
+// Surface: ${sn}
+
+using System;
+using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.Civil.DatabaseServices;
+
+[assembly: CommandClass(typeof(BIMSlopeEL.Commands))]
+
+namespace BIMSlopeEL
+{
+    public class Commands
+    {
+        [CommandMethod("SLOPEEL")]
+        public void SlopeELAnalysis()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                // Get surface
+                ObjectIdCollection surfIds = CivilApplication.ActiveDocument.GetSurfaceIds();
+                if (surfIds.Count == 0) { doc.Editor.WriteMessage("No surfaces found."); return; }
+                TinSurface surface = tr.GetObject(surfIds[0], OpenMode.ForRead) as TinSurface;
+                
+                doc.Editor.WriteMessage($"Surface: {surface.Name}, Points: {surface.Vertices.Count}");
+                tr.Commit();
+            }
+        }
+    }
+}`,
+instructions:["1. Create C# Class Library targeting .NET 4.8","2. Add references: AcMgd.dll, AcDbMgd.dll, AeccDbMgd.dll","3. Paste the generated code","4. Build the DLL"]}
+};
+
+// ============================================================
+// APP STATE (애플리케이션 상태 관리)
+// ============================================================
+let surface = null;
+let tin = null;
+let activeStep = 1;
+let queryPoints = [];
+let elevationResults = [];
+let slopePointA = null, slopePointB = null;
+let slopeResult = null;
+let use3dLength = false;
+let waterStartPts = [];
+let waterDropPaths = [];
+let surfaceAnalysis = null;
+let pourPoints = [];
+let catchments = [];
+let complianceResult = null;
+let selectedPlatform = "dynamo";
+
+// 초기 기본값 세팅 (Initial Default Values for Compliance)
+let slopeForCompliance = 5.0;
+let surfaceType = "road";
+let country = "korea";
+
+const steps=[
+  {id:1,title:"Surface & Elevation",ko:"표고점 추출",icon:"⛰️"},
+  {id:2,title:"Slope Calculation",ko:"경사도 산출",icon:"↘️"},
+  {id:3,title:"Water Drop Analysis",ko:"워터 드롭",icon:"💧"},
+  {id:4,title:"Surface Analysis",ko:"표면 분석",icon:"📊"},
+  {id:5,title:"Catchment Area",ko:"유역면적",icon:"📍"},
+  {id:6,title:"Regulations",ko:"법규 검토",icon:"🛡️"},
+  {id:7,title:"Integration Scripts",ko:"통합 스크립트",icon:"</>"}
+];
+
+// ============================================================
+// 캔버스 드로잉 (CANVAS DRAWING)
+// ============================================================
+function drawCanvas(){
+  const canvas=document.getElementById('surfCanvas');
+  if(!canvas||!surface)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  const pts=surface.points;
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),zs=pts.map(p=>p.z);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const minZ=Math.min(...zs),maxZ=Math.max(...zs);
+  const pad=20;
+  const sx=(x)=>pad+(x-minX)/(maxX-minX)*(W-2*pad);
+  const sy=(y)=>H-pad-(y-minY)/(maxY-minY)*(H-2*pad);
+
+  ctx.strokeStyle='#1e293b';ctx.lineWidth=0.5;
+  for(let i=0;i<=10;i++){
+    const x=pad+i*(W-2*pad)/10;ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();
+    const y=pad+i*(H-2*pad)/10;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();
+  }
+
+  if(tin){
+    ctx.strokeStyle='rgba(100,116,139,0.15)';ctx.lineWidth=0.5;
+    for(const t of tin.triangles){
+      const p0=pts[t[0]],p1=pts[t[1]],p2=pts[t[2]];
+      ctx.beginPath();ctx.moveTo(sx(p0.x),sy(p0.y));ctx.lineTo(sx(p1.x),sy(p1.y));ctx.lineTo(sx(p2.x),sy(p2.y));ctx.closePath();ctx.stroke();
+    }
+  }
+
+  // Draw slope arrows (Step 4)
+  if(activeStep===4&&surfaceAnalysis){
+    for(const a of surfaceAnalysis.slope_arrows){
+      const cx=sx(a.centroid.x),cy=sy(a.centroid.y);
+      const len=8;
+      ctx.strokeStyle=a.color;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+a.direction_x*len,cy-a.direction_y*len);ctx.stroke();
+    }
+  }
+
+  // Draw water drop paths (Step 3)
+  if(activeStep===3&&waterDropPaths.length>0){
+    const colors=['#22d3ee','#a78bfa','#f472b6','#34d399'];
+    waterDropPaths.forEach((wp,i)=>{
+      ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=2;
+      ctx.beginPath();
+      wp.path.forEach((p,j)=>{
+        if(j===0)ctx.moveTo(sx(p.x),sy(p.y));else ctx.lineTo(sx(p.x),sy(p.y));
+      });
+      ctx.stroke();
+      const s=wp.path[0];
+      ctx.fillStyle='#22d3ee';ctx.beginPath();ctx.arc(sx(s.x),sy(s.y),5,0,Math.PI*2);ctx.fill();
+      const e=wp.path[wp.path.length-1];
+      ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(sx(e.x),sy(e.y),5,0,Math.PI*2);ctx.fill();
+    });
+  }
+
+  // Draw catchment points (Step 5)
+  if(activeStep===5&&catchments.length>0){
+    for(const c of catchments){
+      ctx.fillStyle='rgba(34,211,238,0.15)';
+      for(const p of c.boundary_points){
+        ctx.beginPath();ctx.arc(sx(p.x),sy(p.y),4,0,Math.PI*2);ctx.fill();
+      }
+      ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(sx(c.pour_point.x),sy(c.pour_point.y),6,0,Math.PI*2);ctx.fill();
+    }
+  }
+
+  const zRange=maxZ-minZ||1;
+  for(let i=0;i<pts.length;i++){
+    const p=pts[i];
+    const t=(p.z-minZ)/zRange;
+    const r=Math.round(30+200*t),g=Math.round(100+50*(1-Math.abs(t-0.5)*2)),b=Math.round(220-180*t);
+    ctx.fillStyle=`rgb(${r},${g},${b})`;
+    ctx.beginPath();ctx.arc(sx(p.x),sy(p.y),3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(148,163,184,0.6)';ctx.font='8px sans-serif';
+    ctx.fillText(p.z.toFixed(0),sx(p.x)+4,sy(p.y)-2);
+  }
+
+  // Step 1: Elevation Queries
+  if(activeStep===1){
+    for(const r of elevationResults){
+      if(r.elevation!==null){
+        ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(sx(r.point.x),sy(r.point.y),6,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#fff';ctx.font='bold 10px sans-serif';ctx.fillText(`EL:${r.elevation.toFixed(1)}`,sx(r.point.x)+8,sy(r.point.y)-4);
+      }
+    }
+    for(const q of queryPoints){
+      ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx(q.x),sy(q.y),8,0,Math.PI*2);ctx.stroke();
+    }
+  }
+
+  // Step 2: Slope Queries
+  if(activeStep===2){
+    if(slopePointA){ctx.fillStyle='#22d3ee';ctx.beginPath();ctx.arc(sx(slopePointA.x),sy(slopePointA.y),7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.fillText('A',sx(slopePointA.x)-4,sy(slopePointA.y)+4);}
+    if(slopePointB){ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(sx(slopePointB.x),sy(slopePointB.y),7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.fillText('B',sx(slopePointB.x)-4,sy(slopePointB.y)+4);}
+    if(slopePointA&&slopePointB){
+      ctx.strokeStyle='rgba(34,211,238,0.5)';ctx.setLineDash([4,4]);ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(sx(slopePointA.x),sy(slopePointA.y));ctx.lineTo(sx(slopePointB.x),sy(slopePointB.y));ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  ctx.fillStyle='rgba(15,23,42,0.8)';ctx.fillRect(W-90,4,86,44);
+  ctx.fillStyle='#4575b4';ctx.fillRect(W-86,8,10,10);ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';ctx.fillText(`Low: ${minZ.toFixed(1)}m`,W-72,17);
+  ctx.fillStyle='#d73027';ctx.fillRect(W-86,24,10,10);ctx.fillStyle='#94a3b8';ctx.fillText(`High: ${maxZ.toFixed(1)}m`,W-72,33);
+}
+
+// ============================================================
+// 클릭 이벤트 처리 (CANVAS CLICK HANDLER)
+// ============================================================
+function onCanvasClick(e){
+  if(!surface)return;
+  const canvas=document.getElementById('surfCanvas');
+  const rect=canvas.getBoundingClientRect();
+  const cx=e.clientX-rect.left,cy=e.clientY-rect.top;
+  const W=canvas.width,H=canvas.height;
+  const pts=surface.points;
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const pad=20;
+  const x=minX+(cx-pad)/(W-2*pad)*(maxX-minX);
+  const y=minY+(H-pad-cy)/(H-2*pad)*(maxY-minY);
+  const rx=Math.round(x*100)/100,ry=Math.round(y*100)/100;
+
+  if(activeStep===1){queryPoints.push({x:rx,y:ry});}
+  else if(activeStep===2){if(!slopePointA)slopePointA={x:rx,y:ry};else if(!slopePointB)slopePointB={x:rx,y:ry};}
+  else if(activeStep===3){waterStartPts.push({x:rx,y:ry});}
+  else if(activeStep===5){pourPoints.push({x:rx,y:ry});}
+
+  drawCanvas();
+  renderPanel();
+}
+
+// ============================================================
+// 데이터 로드 및 초기화 (LOAD SAMPLE SURFACE)
+// ============================================================
+function loadSampleSurface(){
+  const data=generateSampleSurface();
+  surface=data;
+  tin=new TINSurface(data.points);
+  
+  // 상태 변수 완벽히 초기화 (Clear all states to prevent data leak)
+  queryPoints=[];
+  elevationResults=[];
+  slopePointA=null;
+  slopePointB=null;
+  slopeResult=null;
+  waterStartPts=[];
+  waterDropPaths=[];
+  surfaceAnalysis=null;
+  pourPoints=[];
+  catchments=[];
+  complianceResult=null; // Bug Fix 3: Clear compliance results
+
+  const emptyState = document.getElementById('emptyState');
+  if (emptyState) {
+    emptyState.style.display='none';
+  }
+
+  renderContent();
+  drawCanvas();
+}
+
+// ============================================================
+// 스텝 액션 (STEP ACTIONS)
+// ============================================================
+function runElevation(){
+  if(!tin||!queryPoints.length)return;
+  elevationResults=queryPoints.map(q=>{
+    const el=tin.getElevation(q.x,q.y);
+    return {point:q,elevation:el,label:el!==null?`EL: ${el.toFixed(2)}`:'Outside surface'};
+  });
+  drawCanvas();renderPanel();
+}
+
+function runSlope(){
+  if(!tin||!slopePointA||!slopePointB)return;
+  slopeResult=tin.calculateSlope(slopePointA.x,slopePointA.y,slopePointB.x,slopePointB.y,use3dLength);
+  drawCanvas();renderPanel();
+}
+
+function runWaterDrop(){
+  if(!tin||!waterStartPts.length)return;
+  waterDropPaths=waterStartPts.map(p=>tin.traceWaterDrop(p.x,p.y,500,2.0)).filter(p=>p!==null);
+  drawCanvas();renderPanel();
+}
+
+function runSurfaceAnalysis(){
+  if(!tin)return;
+  surfaceAnalysis=tin.analyzeSurface();
+  drawCanvas();renderPanel();
+}
+
+function runCatchment(){
+  if(!tin||!pourPoints.length)return;
+  catchments=pourPoints.map(p=>tin.delineateCatchment(p.x,p.y)).filter(c=>c!==null);
+  drawCanvas();renderPanel();
+}
+
+// Bug Fix 2: Directly grab DOM values instead of relying on onchange event
+function runCompliance(){
+  const slopeVal = document.getElementById('slopeInput').value;
+  const typeVal = document.getElementById('typeInput').value;
+  const countryVal = document.getElementById('countryInput').value;
+  
+  // 전역 변수 동기화 (Sync global variables just in case)
+  slopeForCompliance = parseFloat(slopeVal);
+  surfaceType = typeVal;
+  country = countryVal;
+
+  complianceResult = checkCompliance(slopeForCompliance, surfaceType, country);
+  renderPanel();
+}
+
+function downloadScript(){
+  const tmpl=SCRIPT_TEMPLATES[selectedPlatform];
+  if(!tmpl)return;
+  const code=tmpl.code(surface?surface.name:'Surface1');
+  const blob=new Blob([code],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`BIM_SlopeEL_${surface?surface.name:'Surface1'}${tmpl.ext}`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// 화면 렌더링 (RENDER FUNCTIONS)
+// ============================================================
+function renderNav(){
+  const nav=document.getElementById('stepNav');
+  nav.innerHTML=steps.map(s=>`<button class="step-btn${activeStep===s.id?' active':''}" onclick="setStep(${s.id})"><span>${s.icon} ${s.title}</span><span class="ko">${s.ko}</span></button>`).join('');
+}
+
+function setStep(id){
+  activeStep=id;
+  renderNav();drawCanvas();renderPanel();
+}
+
+function renderContent(){
+  const main=document.getElementById('mainContent');
+  main.innerHTML=`<div class="content-area"><div class="canvas-wrap"><canvas id="surfCanvas" width="560" height="420" onclick="onCanvasClick(event)"></canvas><div class="canvas-note">Click on canvas to select points. Surface: ${surface.name} (${surface.points.length} points)</div></div><div class="panel" id="stepPanel"></div></div>`;
+  drawCanvas();renderPanel();
+}
+
+function renderPanel(){
+  const panel=document.getElementById('stepPanel');
+  if(!panel)return;
+
+  // Bug Fix 1: All headings (<h2>) now perfectly match the step navigation logic.
+  if(activeStep===1){
+    let tableHTML='';
+    if(elevationResults.length>0){
+      tableHTML=`<div style="background:rgba(30,41,59,.5);border-radius:8px;border:1px solid #334155;overflow:hidden"><table><thead><tr><th>#</th><th>X</th><th>Y</th><th>Elevation</th><th>Label</th></tr></thead><tbody>${elevationResults.map((r,i)=>`<tr><td style="color:#64748b">${i+1}</td><td>${r.point.x.toFixed(1)}</td><td>${r.point.y.toFixed(1)}</td><td class="mono cyan">${r.elevation!==null?r.elevation.toFixed(2)+'m':'N/A'}</td><td style="color:#94a3b8">${r.label}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    panel.innerHTML=`<h2>Step 1: Surface Elevation Extraction</h2><p class="subtitle">표고점 추출</p><p class="desc">Click on the surface to place query points, then extract their elevations.</p><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runElevation()" ${queryPoints.length===0?'disabled':''}>Extract Elevation (${queryPoints.length} points)</button><button class="btn btn-secondary" onclick="queryPoints=[];elevationResults=[];drawCanvas();renderPanel();">Clear</button></div>${tableHTML}`;
+  }
+  else if(activeStep===2){
+    let resultHTML='';
+    if(slopeResult){
+      resultHTML=`<div class="mb-3">${rc('Slope (%)','<span class="highlight">${slopeResult.slope_percentage.toFixed(3)}%</span>',true)}${rc('Slope Ratio',slopeResult.slope_ratio)}${rc('Slope (degrees)',slopeResult.slope_degrees.toFixed(3)+'\u00b0')}${rc('Horizontal Distance',slopeResult.horizontal_distance_2d.toFixed(3)+'m')}${rc('3D Distance',slopeResult.distance_3d.toFixed(3)+'m')}${rc('Elevation Diff',slopeResult.elevation_difference.toFixed(3)+'m')}${rc('Direction',slopeResult.direction)}</div><div class="arrow-info">↘️ Arrow angle: ${(slopeResult.direction_arrow_angle*180/Math.PI).toFixed(1)}\u00b0 (forced downhill)</div>`.replace('${slopeResult.slope_percentage.toFixed(3)}',slopeResult.slope_percentage.toFixed(3));
+    }
+    panel.innerHTML=`<h2>Step 2: Slope Calculation & Direction Arrow</h2><p class="subtitle">경사도 산출 및 화살표</p><p class="desc">Click two points on the surface to calculate slope between them.</p><p style="font-size:13px;margin-bottom:8px"><span style="color:#22d3ee;font-weight:500">Point A:</span> ${slopePointA?`(${slopePointA.x.toFixed(2)}, ${slopePointA.y.toFixed(2)})`:'Click to set'} &nbsp; <span style="color:#f59e0b;font-weight:500">Point B:</span> ${slopePointB?`(${slopePointB.x.toFixed(2)}, ${slopePointB.y.toFixed(2)})`:'Click to set'}</p><label class="checkbox-label mb-2"><input type="checkbox" ${use3dLength?'checked':''} onchange="use3dLength=this.checked"> Use 3D distance</label><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runSlope()" ${!slopePointA||!slopePointB?'disabled':''}>Calculate Slope</button><button class="btn btn-secondary" onclick="slopePointA=null;slopePointB=null;slopeResult=null;drawCanvas();renderPanel();">Clear</button></div>${resultHTML}`;
+  }
+  else if(activeStep===3){
+    let pathsHTML='';
+    if(waterDropPaths.length>0){
+      pathsHTML=waterDropPaths.map((wp,i)=>`<div class="path-card"><h4>💧 Path ${i+1}</h4><div class="stats"><span>Steps: ${wp.path.length}</span><span>Length: ${wp.total_length.toFixed(1)}m</span><span>Drop: ${wp.elevation_drop.toFixed(2)}m</span></div></div>`).join('');
+    }
+    panel.innerHTML=`<h2>Step 3: Water Drop Path Analysis</h2><p class="subtitle">워터 드롭 분석</p><p class="desc">Click points on the surface to trace water flow paths using steepest descent.</p><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runWaterDrop()" ${waterStartPts.length===0?'disabled':''}>Trace Water Drop (${waterStartPts.length} points)</button><button class="btn btn-secondary" onclick="waterStartPts=[];waterDropPaths=[];drawCanvas();renderPanel();">Clear</button></div>${pathsHTML}`;
+  }
+  else if(activeStep===4){
+    let analysisHTML='';
+    if(surfaceAnalysis){
+      const s=surfaceAnalysis.statistics;
+      analysisHTML=`<div class="mb-3">${rc('Total Area',s.total_area.toFixed(2)+' m²')}${rc('Elevation Range',`${s.min_elevation.toFixed(2)}m ~ ${s.max_elevation.toFixed(2)}m`)}${rc('Slope Range',`${s.min_slope_degrees.toFixed(2)}° ~ ${s.max_slope_degrees.toFixed(2)}°`)}${rc('Avg Slope',s.avg_slope_degrees.toFixed(2)+'°')}${rc('Triangles / Points',`${s.total_triangles} / ${s.total_points}`)}</div><h4 style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Elevation Bands</h4><div class="mb-3">${surfaceAnalysis.elevation_bands.map(b=>`<div class="band-row"><div class="band-color" style="background:${b.color}"></div><span>${b.min_elevation.toFixed(1)}m ~ ${b.max_elevation.toFixed(1)}m</span><span style="margin-left:auto;color:#64748b">${b.triangle_count} tri, ${b.area.toFixed(1)} m²</span></div>`).join('')}</div><h4 style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Slope Bands</h4><div>${surfaceAnalysis.slope_bands.map(b=>`<div class="band-row"><div class="band-color" style="background:${b.color}"></div><span>${b.min_slope.toFixed(2)}° ~ ${b.max_slope.toFixed(2)}°</span><span style="margin-left:auto;color:#64748b">${b.triangle_count} tri, ${b.area.toFixed(1)} m²</span></div>`).join('')}</div>`;
+    }
+    panel.innerHTML=`<h2>Step 4: Surface Analysis</h2><p class="subtitle">표면 분석</p><p class="desc">Analyze surface with elevation/slope banding and slope arrows.</p><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runSurfaceAnalysis()">Run Surface Analysis</button><button class="btn btn-secondary" onclick="surfaceAnalysis=null;drawCanvas();renderPanel();">Clear</button></div>${analysisHTML}`;
+  }
+  else if(activeStep===5){
+    let catchHTML='';
+    if(catchments.length>0){
+      catchHTML=catchments.map((c,i)=>`<div class="path-card"><h4>📍 Catchment ${i+1}</h4><div class="mb-2">${rc('Area',c.area.toFixed(2)+' m²')}${rc('Avg Slope',c.avg_slope.toFixed(2)+'°')}${rc('Elevation Range',`${c.min_elevation.toFixed(2)}m ~ ${c.max_elevation.toFixed(2)}m`)}${rc('Boundary Points',c.boundary_points.length.toString())}</div></div>`).join('');
+    }
+    panel.innerHTML=`<h2>Step 5: Catchment Area</h2><p class="subtitle">유역면적</p><p class="desc">Click pour points to delineate watershed areas.</p><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runCatchment()" ${pourPoints.length===0?'disabled':''}>Delineate Catchment (${pourPoints.length} points)</button><button class="btn btn-secondary" onclick="pourPoints=[];catchments=[];drawCanvas();renderPanel();">Clear</button></div>${catchHTML}`;
+  }
+  else if(activeStep===6){
+    let compHTML='';
+    if(complianceResult){
+      compHTML=`<div class="mb-3"><div class="result-card"><span class="label">Overall Compliance</span><span class="value ${complianceResult.is_compliant?'pass':'fail'}" style="font-weight:700;font-size:15px">${complianceResult.is_compliant?'✅ COMPLIANT':'❌ NON-COMPLIANT'}</span></div></div><div class="mb-3">${complianceResult.checks.map(ck=>`<div class="compliance-check"><span class="icon ${ck.passed?'pass':'fail'}">${ck.passed?'✓':'✗'}</span><div><div style="font-weight:500">${ck.rule}</div><div style="font-size:11px;color:#94a3b8">Required: ${ck.required} | Actual: ${ck.actual} | Standard: ${ck.standard}</div></div></div>`).join('')}</div>${complianceResult.recommendations.length?`<div class="warn-box"><h4>Recommendations</h4><ul>${complianceResult.recommendations.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}`;
+    }
+    let regsHTML=REGULATIONS.map(r=>`<div class="reg-card"><div class="title">${r.title}</div><div class="ko">${r.title_ko}</div><div class="desc">${r.description}</div></div>`).join('');
+    
+    // Bug Fix 2: Add IDs to inputs so we can query them dynamically instead of relying purely on events
+    panel.innerHTML=`<h2>Step 6: Regulations & Compliance</h2><p class="subtitle">법규 검토</p><div class="mb-3"><div class="form-row"><label>Slope (%)</label><input type="number" id="slopeInput" value="${slopeForCompliance}" step="0.1"></div><div class="flex gap-2"><div class="form-row" style="flex:1"><label>Surface Type</label><select id="typeInput"><option value="road" ${surfaceType==='road'?'selected':''}>Road</option><option value="general" ${surfaceType==='general'?'selected':''}>General Surface</option><option value="barrier_free" ${surfaceType==='barrier_free'?'selected':''}>Barrier-free Ramp</option><option value="drainage" ${surfaceType==='drainage'?'selected':''}>Pipe Drainage</option></select></div><div class="form-row" style="flex:1"><label>Country</label><select id="countryInput"><option value="korea" ${country==='korea'?'selected':''}>Korea</option><option value="singapore" ${country==='singapore'?'selected':''}>Singapore</option><option value="usa" ${country==='usa'?'selected':''}>USA</option><option value="international" ${country==='international'?'selected':''}>International</option><option value="all" ${country==='all'?'selected':''}>All</option></select></div></div><div class="flex gap-2 mt-2"><button class="btn btn-primary" onclick="runCompliance()">🛡️ Check Compliance</button><button class="btn btn-secondary" onclick="complianceResult=null;renderPanel();">Clear</button></div></div>${compHTML}<h4 style="font-size:13px;font-weight:600;color:#e2e8f0;margin:12px 0 6px">Regulation Database (${REGULATIONS.length} entries)</h4><div class="scroll-box">${regsHTML}</div>`;
+  }
+  else if(activeStep===7){
+    const tmpl=SCRIPT_TEMPLATES[selectedPlatform];
+    const code=tmpl?tmpl.code(surface?surface.name:'Surface1'):'';
+    panel.innerHTML=`<h2>Step 7: Integration Script Generation</h2><p class="subtitle">통합 스크립트 생성</p><div class="form-row"><label>Platform</label></div><div class="platform-grid">${Object.entries(SCRIPT_TEMPLATES).map(([k,v])=>`<div class="platform-card${selectedPlatform===k?' active':''}" onclick="selectedPlatform='${k}';renderPanel()"><div style="font-weight:500">${v.name}</div><div class="lang">${v.language}</div></div>`).join('')}</div><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="renderPanel()">Generate Script</button><button class="btn btn-secondary" onclick="downloadScript()" style="display:flex;align-items:center;gap:4px">⬇️ Download</button></div><div class="code-block"><pre>${escapeHTML(code)}</pre></div>${tmpl?`<div class="instructions"><h4>Instructions</h4><ol>${tmpl.instructions.map(i=>`<li>${i}</li>`).join('')}</ol></div>`:''}`;
+  }
+}
+
+// Initialize
+renderNav();
+</script>
+</body>
+</html>

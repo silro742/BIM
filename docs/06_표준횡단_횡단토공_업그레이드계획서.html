@@ -1,0 +1,671 @@
+<title>횡단토공 게이트키퍼 계획</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=Noto+Serif+KR:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#EFF1EE; --surface:#FAFBF9; --surface-2:#E5E9E5; --sunk:#E9ECE8;
+  --ink:#161F1D; --ink-2:#3B4744; --muted:#6C7873; --line:#D2D8D3; --line-2:#BFC7C1;
+  --accent:#0E6273; --accent-2:#0A4C59; --accent-soft:rgba(14,98,115,.09);
+  --crit:#A02A1D; --crit-soft:rgba(160,42,29,.10);
+  --warn:#84600F; --warn-soft:rgba(132,96,15,.12);
+  --ok:#2B6840; --ok-soft:rgba(43,104,64,.12);
+  --shadow:0 1px 2px rgba(22,31,29,.05),0 8px 24px -16px rgba(22,31,29,.22);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#101615; --surface:#161E1D; --surface-2:#1D2726; --sunk:#0C1211;
+    --ink:#E7ECE9; --ink-2:#BCC6C2; --muted:#8A9894; --line:#2A3634; --line-2:#3A4846;
+    --accent:#63C8D8; --accent-2:#8FDCE8; --accent-soft:rgba(99,200,216,.11);
+    --crit:#EE8A7B; --crit-soft:rgba(238,138,123,.12);
+    --warn:#DFB253; --warn-soft:rgba(223,178,83,.12);
+    --ok:#7CC591; --ok-soft:rgba(124,197,145,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101615; --surface:#161E1D; --surface-2:#1D2726; --sunk:#0C1211;
+  --ink:#E7ECE9; --ink-2:#BCC6C2; --muted:#8A9894; --line:#2A3634; --line-2:#3A4846;
+  --accent:#63C8D8; --accent-2:#8FDCE8; --accent-soft:rgba(99,200,216,.11);
+  --crit:#EE8A7B; --crit-soft:rgba(238,138,123,.12);
+  --warn:#DFB253; --warn-soft:rgba(223,178,83,.12);
+  --ok:#7CC591; --ok-soft:rgba(124,197,145,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:'IBM Plex Sans KR',system-ui,-apple-system,sans-serif;
+  font-weight:400;font-size:15.5px;line-height:1.72;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Noto Serif KR','Nanum Myeongjo',Georgia,serif;text-wrap:balance;margin:0}
+.mono,code,pre,td.num,.tag{font-family:'IBM Plex Mono','Cascadia Code',ui-monospace,monospace}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+.doc{display:grid;grid-template-columns:minmax(0,1fr);gap:40px}
+@media(min-width:1000px){.doc{grid-template-columns:214px minmax(0,1fr);gap:56px}}
+
+/* ---------- masthead ---------- */
+.mast{border-bottom:1px solid var(--line);padding:56px 0 28px;margin-bottom:44px}
+.eyebrow{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.mast h1{font-size:clamp(30px,4.6vw,46px);font-weight:700;line-height:1.24;letter-spacing:-.01em;margin:14px 0 12px}
+.mast .lede{color:var(--ink-2);font-size:17px;max-width:62ch;font-weight:300}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:22px;font-size:12.5px;color:var(--muted)}
+.meta b{color:var(--ink-2);font-weight:500}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:30px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:14px 16px;box-shadow:var(--shadow)}
+.tile .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.tile .v{font-family:'IBM Plex Mono',monospace;font-size:25px;font-weight:500;color:var(--ink);margin-top:6px;font-variant-numeric:tabular-nums}
+.tile .v.crit{color:var(--crit)}
+.tile .n{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ---------- nav rail ---------- */
+nav.rail{align-self:start}
+@media(min-width:1000px){nav.rail{position:sticky;top:24px}}
+nav.rail .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+nav.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+nav.rail a{display:flex;gap:9px;text-decoration:none;color:var(--ink-2);font-size:13.5px;padding:4px 6px;border-radius:2px;border-left:2px solid transparent}
+nav.rail a:hover{background:var(--accent-soft);color:var(--accent);border-left-color:var(--accent)}
+nav.rail a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+nav.rail .n{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);padding-top:2px}
+
+/* ---------- sections ---------- */
+section{margin-bottom:60px;scroll-margin-top:20px}
+section>h2{font-size:24px;font-weight:600;letter-spacing:-.005em;padding-bottom:10px;border-bottom:2px solid var(--ink);margin-bottom:8px}
+section>h2 .sn{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--accent);font-weight:500;margin-right:12px;vertical-align:2px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+h3{font-size:17.5px;font-weight:600;margin:30px 0 10px}
+h4{font-size:14.5px;font-weight:600;margin:20px 0 8px;color:var(--ink-2)}
+p{margin:0 0 14px;max-width:72ch}
+ul,ol{margin:0 0 14px;padding-left:20px;max-width:72ch}
+li{margin-bottom:5px}
+strong{font-weight:600}
+a{color:var(--accent)}
+
+/* ---------- callouts ---------- */
+.note{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 3px 3px 0;padding:14px 18px;margin:18px 0}
+.note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.note.crit{border-left-color:var(--crit);background:var(--crit-soft)}
+.note p:last-child{margin-bottom:0}
+.note .h{font-size:12px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:6px}
+.note.warn .h{color:var(--warn)} .note.crit .h{color:var(--crit)}
+
+/* ---------- chips ---------- */
+.tag{display:inline-block;font-size:11px;font-weight:500;letter-spacing:.04em;padding:1px 7px;border-radius:2px;border:1px solid;white-space:nowrap;vertical-align:1px}
+.t-p0{color:var(--crit);border-color:var(--crit);background:var(--crit-soft)}
+.t-p1{color:var(--warn);border-color:var(--warn);background:var(--warn-soft)}
+.t-p2{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.t-new{color:var(--ok);border-color:var(--ok);background:var(--ok-soft)}
+.t-n{color:var(--muted);border-color:var(--line-2);background:var(--surface-2)}
+
+/* ---------- tables ---------- */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface);margin:18px 0;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:560px}
+thead th{text-align:left;font-weight:600;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+td.id,td.num{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+td.w{white-space:nowrap}
+
+/* ---------- feature cards ---------- */
+.feat{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:20px 22px;margin:16px 0;box-shadow:var(--shadow)}
+.feat.p0{border-left:3px solid var(--crit)}
+.feat.p1{border-left:3px solid var(--warn)}
+.feat.p2{border-left:3px solid var(--accent)}
+.feat>.hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px}
+.feat .fid{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);font-weight:500}
+.feat h3{margin:0;font-size:18px}
+.feat .src{font-size:12.5px;color:var(--muted);border-left:2px solid var(--line-2);padding-left:10px;margin:8px 0 14px}
+.feat p,.feat ul,.feat ol{max-width:70ch}
+.ac{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2);font-size:13px;color:var(--ink-2)}
+.ac .h{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ok);font-weight:600;margin-bottom:5px}
+.ac ul{margin:0;padding-left:18px}
+
+/* ---------- code ---------- */
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:3px;padding:14px 16px;overflow-x:auto;font-size:12.5px;line-height:1.62;color:var(--ink-2);margin:14px 0}
+code{font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:2px;color:var(--ink)}
+pre code{background:none;padding:0;font-size:inherit;color:inherit}
+
+/* ---------- roadmap ---------- */
+.road{display:grid;gap:0;margin:20px 0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--surface)}
+.phase{display:grid;grid-template-columns:1fr;gap:4px;padding:16px 20px;border-bottom:1px solid var(--line);position:relative}
+.phase:last-child{border-bottom:0}
+@media(min-width:760px){.phase{grid-template-columns:132px 1fr 200px;gap:20px;align-items:start}}
+.phase .when{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--accent);font-weight:500}
+.phase .when b{display:block;font-family:'Noto Serif KR',serif;font-size:15px;color:var(--ink);font-weight:600;margin-bottom:2px}
+.phase .what{font-size:14px;color:var(--ink-2)}
+.phase .out{font-size:12.5px;color:var(--muted)}
+
+/* ---------- steps ---------- */
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin:18px 0}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:12px 14px}
+.step.new{border-color:var(--ok);background:var(--ok-soft)}
+.step .no{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted)}
+.step .nm{font-size:14px;font-weight:500;color:var(--ink);margin-top:2px}
+.step .ds{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+
+footer{border-top:1px solid var(--line);padding-top:22px;margin-top:12px;font-size:13px;color:var(--muted)}
+footer p{max-width:72ch}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">Node 06 · 표준횡단 · 횡단토공</div>
+  <h1>잘못된 데이터를 하류로 내보내지 않는 게이트키퍼</h1>
+  <p class="lede">글로벌 인프라 BIM 연구자료를 <code>06_표준횡단_횡단토공</code> HTML 앱에 투영한 업그레이드 계획. 핵심은 기능 추가가 아니라, 연구자료가 반복해 경고한 세 가지 데이터 오염을 앱이 <strong>통과시키지 않도록</strong> 만드는 것이다.</p>
+  <div class="meta">
+    <span><b>버전</b> 계획서 v1.0</span>
+    <span><b>작성</b> 2026-08-25</span>
+    <span><b>대상</b> 단일 파일 HTML 앱</span>
+    <span><b>근거</b> 「차세대 인프라 BIM: 표준횡단 및 횡단토공 데이터 파이프라인」</span>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="k">도출 갭</div><div class="v">13</div><div class="n">연구자료 6개 장 대비</div></div>
+    <div class="tile"><div class="k">차단 게이트</div><div class="v crit">3</div><div class="n">좌표 · 체적 · 리빌드</div></div>
+    <div class="tile"><div class="k">신규 기능</div><div class="v">12</div><div class="n">F-01 ~ F-12</div></div>
+    <div class="tile"><div class="k">로드맵</div><div class="v">4</div><div class="n">Phase · 약 8주</div></div>
+  </div>
+</header>
+
+<div class="doc">
+
+<nav class="rail">
+  <div class="lbl">목차</div>
+  <ol>
+    <li><a href="#s0"><span class="n">00</span><span>전제와 범위</span></a></li>
+    <li><a href="#s1"><span class="n">01</span><span>갭 분석</span></a></li>
+    <li><a href="#s2"><span class="n">02</span><span>목표와 원칙</span></a></li>
+    <li><a href="#s3"><span class="n">03</span><span>아키텍처 · 스키마</span></a></li>
+    <li><a href="#s4"><span class="n">04</span><span>기능 명세</span></a></li>
+    <li><a href="#s5"><span class="n">05</span><span>화면 재설계</span></a></li>
+    <li><a href="#s6"><span class="n">06</span><span>스크립트 생성기</span></a></li>
+    <li><a href="#s7"><span class="n">07</span><span>검증 · 테스트</span></a></li>
+    <li><a href="#s8"><span class="n">08</span><span>로드맵</span></a></li>
+    <li><a href="#s9"><span class="n">09</span><span>리스크</span></a></li>
+    <li><a href="#s10"><span class="n">10</span><span>즉시 착수 3건</span></a></li>
+    <li><a href="#sA"><span class="n">A</span><span>추적표 · 파라미터</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="s0">
+  <h2><span class="sn">00</span>전제와 범위</h2>
+  <p class="sub">원본 앱 소스를 직접 열람하지 않은 상태에서의 설계 계획임을 먼저 밝힌다.</p>
+
+  <div class="note">
+    <div class="h">이 계획의 근거 두 가지</div>
+    <p><strong>① 연구자료가 서술하는 Node 06의 역할</strong> — 상류(선형·종단)에서 JSON을 받아 표준횡단과 횡단토공을 검증하고, 하류(배수·포장·구조)로 파라미터를 전달하는 자동화 게이트키퍼. 로컬 HTTP 포트를 통해 Dynamo · AutoCAD LISP · Revit 저널 스크립트를 생성·구동한다.</p>
+    <p><strong>② 동일 계열 앱의 실제 구조</strong> — 저장소의 <code>BIM_Slope_EL_Automation.html</code>(962행, 단일 파일)에서 확인한 패턴: <code>steps[]</code> 기반 좌측 워크플로우 내비, 캔버스 + 우측 패널 2열, <code>REGULATIONS[]</code> + <code>checkCompliance()</code> 법규 게이트, <code>SCRIPT_TEMPLATES{}</code> 생성기와 <code>downloadScript()</code>, 외부 의존성 0의 오프라인 구동.</p>
+    <p>실제 소스 확인 후에는 <strong>함수 배치(구현 위치)만 재매핑</strong>하면 되며, 기능 명세 · 수용기준 · 데이터 스키마는 그대로 유효하다.</p>
+  </div>
+
+  <p><strong>범위 안</strong> — 단일 파일 HTML 앱 내부의 계산 엔진, 검증 게이트, 화면 단계, 스크립트 생성기, JSON 스키마, 견고성과 성능.<br>
+  <strong>범위 밖</strong> — Civil 3D · Revit 본체 애드인 개발, 서버 인프라 구축, 유상 도구 도입.</p>
+</section>
+
+<section id="s1">
+  <h2><span class="sn">01</span>갭 분석</h2>
+  <p class="sub">연구자료의 6개 장을 앱에 투영해 도출한 13개 갭. 심각도는 프로젝트 붕괴 가능성 기준.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>ID</th><th>연구자료 근거</th><th>요구 역량</th><th>현행 추정</th><th>심각도</th></tr></thead>
+    <tbody>
+      <tr><td class="id">G-01</td><td class="w">§4 좌표 합성 왜곡</td><td>EPSG 미기재 데이터의 파이프라인 강제 차단</td><td>비고 태그만 표기, 진행 허용</td><td class="w"><span class="tag t-p0">치명적</span></td></tr>
+      <tr><td class="id">G-02</td><td class="w">§3 양단면평균법 오차</td><td>복합토량 강제 + 곡선부 편심 보정</td><td>AEA 값 수용 가능</td><td class="w"><span class="tag t-p0">치명적</span></td></tr>
+      <tr><td class="id">G-03</td><td class="w">§3 토량변화율</td><td>지층별 L/C 계수 동적 매핑</td><td>순수 기하 체적만</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
+      <tr><td class="id">G-04</td><td class="w">§4 코리더 타겟 단절</td><td>타겟 무결성 · Rebuild 신선도 검사</td><td>검사 없음</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
+      <tr><td class="id">G-05</td><td class="w">§5.2 타겟 스위칭</td><td>교량 · 터널 구간 사면 타겟 자동 전환</td><td>수작업</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
+      <tr><td class="id">G-06</td><td class="w">§5.1 Toposolid</td><td>포장층 · 길어깨 · 식수대 논리 분할</td><td>템플릿 없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
+      <tr><td class="id">G-07</td><td class="w">§2.3 IFC 4.3</td><td>측점 기반 가상 분할 + 4D/5D 속성</td><td>미지원 추정</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
+      <tr><td class="id">G-08</td><td class="w">§2.1 InfoDrainage</td><td>배수 노드 표준 핸드오프 페이로드</td><td>정의 없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
+      <tr><td class="id">G-09</td><td class="w">§4 인코딩 · 포트</td><td>UTF-8 강제, 경로 인용, 콜드스타트 재시도</td><td>산발적 대응</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
+      <tr><td class="id">G-10</td><td class="w">§5.3 MMS · LOD</td><td>표면 디테일 수준 제어 루틴</td><td>없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
+      <tr><td class="id">G-11</td><td class="w">§1 · §6 MCP</td><td>검증 결과의 기계 판독 컨텍스트</td><td>없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
+      <tr><td class="id">G-12</td><td class="w">§2.6 드론 EG/DG</td><td>포인트클라우드 기반 체적 변화 추적</td><td>없음</td><td class="w"><span class="tag t-n">낮음</span></td></tr>
+      <tr><td class="id">G-13</td><td class="w">§2.2 평행 모델링</td><td>2개 산출 경로 교차 검증 리포트</td><td>없음</td><td class="w"><span class="tag t-n">낮음</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="sn">02</span>목표와 설계 원칙</h2>
+  <p class="sub">무엇을 지키기 위한 업그레이드인가.</p>
+
+  <h3>목표</h3>
+  <ul>
+    <li><strong>O1 · 무결성 우선</strong> — 좌표 · 타겟 · 체적 3대 오염원을 앱이 차단한다. 경고가 아니라 게이트다.</li>
+    <li><strong>O2 · 물량 신뢰도</strong> — 기하 체적에서 시공 체적으로 격상(토량변화율 반영, 운반 계획 연동).</li>
+    <li><strong>O3 · 파이프라인 연속성</strong> — 상·하류 데이터가 JSON · LandXML · IFC 4.3 표준 스키마로만 유동.</li>
+    <li><strong>O4 · 반복 작업 제거</strong> — 구조물 구간 타겟 스위칭, 지형 분할, LOD 제어를 스크립트로 자동 생성.</li>
+    <li><strong>O5 · 견고성</strong> — 한글 경로 · 공백 경로 · 콜드스타트에서 실패하지 않는다.</li>
+  </ul>
+
+  <h3>설계 원칙</h3>
+  <ol>
+    <li><strong>단일 파일 유지</strong> — 외부 CDN과 빌드 도구 없이 오프라인 더블클릭 구동(현장 보안망 대응).</li>
+    <li><strong>게이트는 하드 블록</strong> — P0 위반 시 하류 내보내기 버튼을 <code>disabled</code> 처리.</li>
+    <li><strong>계수 하드코딩 금지</strong> — 모든 기준값은 편집 가능한 <code>PARAMS</code> 객체 + 프로젝트 JSON 오버라이드.</li>
+    <li><strong>산출값에 출처 표기</strong> — 결과 카드마다 산출 기법(<code>AEA</code> / <code>Prismoidal</code> / <code>Composite TIN</code>)과 신뢰도 배지.</li>
+    <li><strong>스키마 버저닝</strong> — 모든 입출력 JSON에 <code>schema_version</code>, 하위 호환 파서 유지.</li>
+  </ol>
+</section>
+
+<section id="s3">
+  <h2><span class="sn">03</span>아키텍처와 데이터 스키마</h2>
+  <p class="sub">단일 파일 안에서의 논리 구획과, 상류 → Node 06 → 하류 계약.</p>
+
+  <h3>모듈 구획</h3>
+  <p>기존 주석 배너 패턴을 유지하되 다음 블록으로 재편한다.</p>
+  <pre><code>[A] CORE/PARAMS     기준값 · 계수 테이블 (좌표계, L/C, 사면구배, 임계값)
+[B] CORE/GEODESY    좌표계 검증, EPSG 화이트리스트, 합성좌표 탐지
+[C] CORE/VOLUME     AEA / Prismoidal / Composite TIN / 곡률보정 / 토량변화율
+[D] CORE/MASSHAUL   누가토량곡선, 유용 · 사토 · 토취 배분, 운반거리
+[E] GATE/VALIDATOR  게이트 규칙 엔진(P0/P1/P2), 차단 상태 관리
+[F] IO/SCHEMA       JSON v2 파서 · 직렬화, LandXML · IFC 4.3 내보내기
+[G] IO/BRIDGE       로컬 HTTP 브리지 (인코딩 · 경로 · 재시도)
+[H] GEN/SCRIPTS     플랫폼별 스크립트 템플릿
+[I] UI/STEPS        단계 내비 + 패널 렌더
+[J] QA/SELFTEST     골든 케이스 자체 검증 러너</code></pre>
+
+  <h3>데이터 스키마 v2</h3>
+  <pre><code>{
+  "schema_version": "2.0",
+  "node": "06_standard_section_earthwork",
+  "project": {
+    "crs": { "epsg": 5186, "name": "Korea 2000 / Central Belt 2010",
+             "vertical": "KVD2002",
+             "source": "declared" }        // declared | inherited | SYNTHESIZED → 차단
+  },
+  "alignment": {
+    "geometry_hash": "sha1:…",             // 상류 변경 감지
+    "elements": [ { "type": "line|arc|clothoid", "sta_in": 0, "sta_out": 320.5,
+                    "radius": null, "A": null } ]
+  },
+  "sections": [
+    { "sta": 100.0,
+      "stype": "E",                        // E 토공 · B 교량 · T 터널 · C 컬버트
+      "northing": 412345.678, "easting": 198765.432,   // 실좌표 필수
+      "lane_width": 3.5, "cross_slope": -0.02,
+      "cut_slope": "1:1.2", "fill_slope": "1:1.5",
+      "area_cut": 12.34, "area_fill": 45.67,
+      "soil": { "layers": [ {"type":"토사","thick":2.1},
+                            {"type":"발파암","thick":5.4} ] },
+      "target_status": { "daylight": "surface:EG", "width": "linked", "broken": false } }
+  ],
+  "volumes": { "method": "composite_tin", "curvature_corrected": true,
+               "cut_bank_m3": 128450.2, "fill_compacted_m3": 96320.7 },
+  "corridor": { "last_rebuild": "2026-08-25T09:12:00+09:00",
+                "auto_rebuild": true, "surface_lod": "draft" },
+  "gates": { "passed": false, "blocking": ["G-01-CRS-SYNTHESIZED"] }
+}</code></pre>
+
+  <p><strong>핵심 변경점</strong> — ① <code>crs</code> 블록과 <code>SYNTHESIZED</code> 열거값 신설 ② <code>stype</code>으로 구조물 구간 명시 ③ <code>soil.layers</code>로 지층별 토량변화율 매핑 근거 확보 ④ <code>target_status</code>와 <code>corridor.last_rebuild</code>로 코리더 신선도 검증 ⑤ <code>gates</code>로 게이트 결과 자체를 하류에 전달.</p>
+</section>
+
+<section id="s4">
+  <h2><span class="sn">04</span>기능 명세</h2>
+  <p class="sub">우선순위 — <span class="tag t-p0">P0</span> 차단 게이트, 즉시 · <span class="tag t-p1">P1</span> 핵심 계산과 자동화 · <span class="tag t-p2">P2</span> 상호운용과 고도화</p>
+
+  <div class="feat p0">
+    <div class="hd"><span class="fid">F-01</span><h3>좌표계 무결성 게이트</h3><span class="tag t-p0">P0</span></div>
+    <div class="src">§4 — “가장 대표적이고 파괴적인 오류는 좌표 합성 왜곡”</div>
+    <p>상류 JSON 로드 시 <code>project.crs.epsg</code>를 최우선 검사하고, 한국 투영 좌표 화이트리스트(5186 중부 · 5185 서부 · 5187 동부 · 5188 동해 · 5179 UTM-K)와 대조한다. 다음 휴리스틱 중 하나라도 참이면 <strong>합성좌표</strong>로 판정한다.</p>
+    <ul>
+      <li>측점 실좌표 필드 결측</li>
+      <li><strong>선형에 곡선 요소가 있는데 모든 좌표가 완전 직선상 정렬</strong>(잔차 RMS &lt; 1e-6 m) — 가장 결정적인 지표</li>
+      <li>좌표가 국내 투영 유효 범위(N 100,000–800,000 / E 0–400,000) 이탈</li>
+      <li>원점이 (0,0) 근방 ±1,000 m — 상대좌표 의심</li>
+    </ul>
+    <p>판정 시 적색 배너, <strong>하류 내보내기 전면 차단</strong>, 측점 비고란 <code>좌표합성(Synthesized)</code> 태그, 상류 재발행 요청문 자동 생성.</p>
+<pre><code>function detectSynthesizedCRS(data){
+  const f=[], secs=data.sections||[];
+  if(!data.project?.crs?.epsg) f.push("EPSG 코드 미기재");
+  const hasCurve=(data.alignment?.elements||[]).some(e=&gt;e.type!=="line");
+  const pts=secs.filter(s=&gt;Number.isFinite(s.northing)&amp;&amp;Number.isFinite(s.easting));
+  if(pts.length&lt;secs.length) f.push("측점 실좌표 결측");
+  if(pts.length&gt;=3){
+    const n=pts.length,
+          mx=pts.reduce((a,p)=&gt;a+p.easting,0)/n,
+          my=pts.reduce((a,p)=&gt;a+p.northing,0)/n;
+    let sxx=0,sxy=0;
+    pts.forEach(p=&gt;{sxx+=(p.easting-mx)**2; sxy+=(p.easting-mx)*(p.northing-my);});
+    const k=sxx?sxy/sxx:0;
+    const rms=Math.sqrt(pts.reduce((a,p)=&gt;
+      a+((p.northing-my)-k*(p.easting-mx))**2,0)/n);
+    if(hasCurve &amp;&amp; rms&lt;1e-6) f.push("곡선 선형인데 좌표가 완전 직선 → 합성좌표 강력 의심");
+  }
+  return {synthesized:f.length&gt;0, reasons:f};
+}</code></pre>
+    <div class="ac"><div class="h">수용기준</div><ul>
+      <li>곡선 포함 + 좌표 결측 샘플에서 내보내기 버튼 <code>disabled</code>, 사유 3건 이상 표시</li>
+      <li>EPSG:5186 + 실좌표 정상 샘플은 무경고 통과</li>
+      <li>판정 결과가 출력 JSON <code>gates.blocking</code>에 기록</li>
+    </ul></div>
+  </div>
+
+  <div class="feat p0">
+    <div class="hd"><span class="fid">F-02</span><h3>체적 산출 3중 엔진과 복합토량 강제</h3><span class="tag t-p0">P0</span></div>
+    <div class="src">§3 — 양단면평균법은 급곡선 · 교차로에서 “수만 ㎥ 단위 오차”를 낳는다</div>
+    <p>세 기법을 모두 계산해 <strong>나란히 비교 표시</strong>한다.</p>
+    <ul>
+      <li>양단면평균법 <code>V = (A1+A2)/2 × L</code></li>
+      <li>정밀법 <code>V = L/6 × (A1 + 4·Am + A2)</code></li>
+      <li>복합토량 <code>V = Σ(삼각형 면적 × 평균 절·성 깊이)</code></li>
+    </ul>
+    <p><strong>곡선부 편심 보정</strong>(Pappus 정리) — 반경 R 구간에서 단면 도심이 곡률 중심 반대쪽으로 e만큼 치우치면 <code>V' = V × (1 + e/R)</code>, 곡률 중심 쪽이면 <code>1 − e/R</code>. 편측 확폭 · 편경사 구간에서 필수.</p>
+    <p><strong>불일치 경보</strong> — AEA와 Composite TIN 차이가 3% 초과 시 황색, 7% 초과 시 적색 + 해당 구간 하이라이트. <strong>하류 전달값은 Composite TIN만 허용</strong>하며 AEA 선택 시 차단(<code>G-02-METHOD</code>).</p>
+    <div class="note warn"><div class="h">계산상 주의</div><p>영단면 교차 삼각형(절·성 혼재)은 반드시 교선으로 세분해야 한다. 단순 평균 깊이를 쓰면 절토와 성토가 서로 상쇄되어 물량이 과소 산출된다.</p></div>
+    <div class="ac"><div class="h">수용기준</div><ul>
+      <li>직선 구간 샘플에서 3기법 편차 &lt; 1%</li>
+      <li>R=60 m 급곡선 + 편측 확폭 샘플에서 차이가 정량 표기되고 적색 경보 발생</li>
+      <li>곡률 보정 on/off 결과가 각각 표기</li>
+    </ul></div>
+  </div>
+
+  <div class="feat p0">
+    <div class="hd"><span class="fid">F-03</span><h3>코리더 타겟 · 리빌드 신선도 검사</h3><span class="tag t-p0">P0</span></div>
+    <div class="src">§4 — “코리더 타겟 단절 및 형상 자동 업데이트 누락”</div>
+    <ul>
+      <li><code>alignment.geometry_hash</code>와 <code>corridor.last_rebuild</code> 비교 — 선형 변경 후 리빌드가 없으면 <strong>STALE 판정 · 차단</strong></li>
+      <li><code>auto_rebuild === false</code>이면 황색 경고: “성능 목적 자동 재구성 해제 상태에서 성과품 추출 시도”</li>
+      <li>측점별 <code>target_status.broken</code> 또는 <code>daylight: none</code> 구간을 목록화하고 캔버스에 적색 마커</li>
+      <li>사면이 지정 최대 연장 내에 원지반과 만나지 못한 측점은 <strong>옹벽 검토 후보</strong>로 분류해 하류 전달</li>
+    </ul>
+    <div class="ac"><div class="h">수용기준</div><ul><li>리빌드 시각이 선형 변경 시각보다 앞선 샘플에서 내보내기 차단 + “코리더 재구성 필요” 표기</li></ul></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">F-04</span><h3>토량변화율 지층별 매핑 + 누가토량곡선</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">§3 — “토량 변화율의 동적 반영 부재도 치명적인 시공성 문제”</div>
+    <div class="tbl"><table>
+      <thead><tr><th>토질 구분</th><th>L 팽창률</th><th>C 다짐률</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>토사 (Common soil)</td><td class="num">1.20 – 1.30</td><td class="num">0.87 – 0.90</td><td>함수비 영향 큼</td></tr>
+        <tr><td>리핑암 (Ripping rock)</td><td class="num">1.30 – 1.40</td><td class="num">1.00 – 1.05</td><td>—</td></tr>
+        <tr><td>발파암 (Blasting rock)</td><td class="num">1.50 – 1.60</td><td class="num">1.15 – 1.20</td><td>유용 시 입도 관리</td></tr>
+        <tr><td>폐석회 등 특수토</td><td class="num">프로젝트 정의</td><td class="num">프로젝트 정의</td><td>건조시간 별도 (F-11)</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note warn"><div class="h">필수 고지</div><p>위 값은 <strong>설계 착수용 기본값</strong>이다. 반드시 프로젝트 토질조사 보고서 값으로 대체하도록 UI에 고지하고, 미대체 시 산출 결과에 “기본계수 사용” 배지를 부착한다.</p></div>
+    <p><strong>계산 규칙</strong>은 자연상태(Bank) 기준으로 통일한다. 성토 소요 자연토량 <code>V_bank = V_compacted / C</code>, 운반 토량 <code>V_loose = V_bank × L</code>.</p>
+    <p><strong>누가토량곡선</strong>을 신설해 x축 측점 · y축 누가 토량으로 유용 구간, 토취장, 사토장을 색으로 구분하고 평균 운반거리와 무상 운반거리 초과분을 산출한다.</p>
+    <div class="ac"><div class="h">수용기준</div><ul><li>발파암 40% 포함 샘플에서 순수 기하 체적 대비 사토량 차이가 정량 표기되고 사토장 소요 용량이 ㎥로 제시</li></ul></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">F-05</span><h3>구조물 구간 코리더 타겟 자동 스위칭</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">§5.2 — 히든 팁: 토공에서 교량 · 터널로 진입하는 트랜지션 자동화</div>
+    <p><code>stype</code>이 B(교량) · T(터널)인 구간과 전후 트랜지션(기본 20 m, 조정 가능)을 자동 검출하고, 사면 타겟을 원지반 표면에서 <strong>교대 벽면 · 갱구부 형상선</strong>으로 전환하는 Dynamo 스크립트를 생성한다.</p>
+<pre><code># Corridor Target Switching @ Structure Zones (Node 06 auto-generated)
+for rng in STRUCTURE_RANGES:
+    region = corridor.GetBaselineRegionByStation(rng["sta_in"], rng["sta_out"])
+    for sub in region.AppliedAssemblySubassemblies:
+        if sub.Name in DAYLIGHT_SUBS:
+            sub.SetTargetSurface(None)                       # 원지반 타겟 해제
+            sub.SetTargetFeatureLine(rng["feature_line_id"])  # 구조물 벽면으로 전환
+corridor.Rebuild()</code></pre>
+    <div class="ac"><div class="h">수용기준</div><ul><li>B/T 구간 3개 샘플에서 구간 범위와 전환 대상이 정확히 나열된 스크립트가 다운로드</li></ul></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">F-06</span><h3>검증 게이트 엔진</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">§1 — “설계 기준 위반을 감지하는 논리적 게이트(Rule-based Gate)”</div>
+    <p>규칙을 선언형 배열로 분리하고(기존 <code>REGULATIONS</code> 패턴 확장) 각 규칙에 <code>severity</code>와 <code>blocking</code>을 부여한다. 게이트 대시보드는 통과·차단 요약과 각 항목의 근거 기준 · 현재값 · 요구값 · 조치 권고를 보여준다.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>규칙 ID</th><th>검사 항목</th><th>기본 임계값</th><th>심각도</th></tr></thead>
+      <tbody>
+        <tr><td class="id">G-01-CRS</td><td>좌표계 · 합성좌표</td><td>EPSG 명시 + 합성 아님</td><td><span class="tag t-p0">P0</span></td></tr>
+        <tr><td class="id">G-02-METHOD</td><td>체적 산출 기법</td><td>Composite TIN</td><td><span class="tag t-p0">P0</span></td></tr>
+        <tr><td class="id">G-03-STALE</td><td>코리더 리빌드 신선도</td><td>선형 변경 이후 리빌드</td><td><span class="tag t-p0">P0</span></td></tr>
+        <tr><td class="id">G-04-XSLOPE</td><td>표준 횡단경사</td><td class="num">2.0% (1.5–2.5%)</td><td><span class="tag t-p1">P1</span></td></tr>
+        <tr><td class="id">G-05-SLOPE-CUT</td><td>절토 사면 구배</td><td class="num">토사 1:1.2 · 리핑암 1:0.7 · 발파암 1:0.5</td><td><span class="tag t-p1">P1</span></td></tr>
+        <tr><td class="id">G-06-SLOPE-FILL</td><td>성토 사면 구배</td><td class="num">1:1.5 이내</td><td><span class="tag t-p1">P1</span></td></tr>
+        <tr><td class="id">G-07-BERM</td><td>소단 설치</td><td class="num">사면고 5 m 초과 시 폭 1.0 m 이상</td><td><span class="tag t-p1">P1</span></td></tr>
+        <tr><td class="id">G-08-WIDTH</td><td>차로폭 연속성</td><td class="num">급변 &gt; 0.5 m/20 m 없음</td><td><span class="tag t-p1">P1</span></td></tr>
+        <tr><td class="id">G-09-SUPER</td><td>편경사 접속</td><td>최대 편경사 · 변화율 준수</td><td><span class="tag t-p1">P1</span></td></tr>
+        <tr><td class="id">G-10-INTERVAL</td><td>측점 간격</td><td class="num">직선 20 m / 곡선 10 m</td><td><span class="tag t-p2">P2</span></td></tr>
+        <tr><td class="id">G-11-LOD</td><td>정보 수준</td><td>프로젝트 LOD 요구 충족</td><td><span class="tag t-p2">P2</span></td></tr>
+        <tr><td class="id">G-12-ENC</td><td>인코딩 · 경로</td><td>UTF-8, 공백 · 한글 안전</td><td><span class="tag t-p1">P1</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><div class="h">기준값 확정 절차</div><p>임계값은 <strong>국가건설기준(KDS)과 도로설계편람의 프로젝트 적용값으로 반드시 검증 후 확정</strong>해야 한다. 앱은 각 값의 출처 필드(<code>source</code>)를 함께 표기한다.</p></div>
+    <div class="ac"><div class="h">수용기준</div><ul><li>P0 위반 1건이면 모든 하류 내보내기 UI 비활성, P1만 위반이면 사유 기록 후 진행 허용</li></ul></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">F-07</span><h3>견고성 — 인코딩 · 경로 · 브리지 프로토콜</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">§4 — “인코딩 파손 및 네트워크 프로토콜 위반”</div>
+    <ul>
+      <li><strong>인코딩</strong> — 생성 스크립트 전량 UTF-8. Python <code># -*- coding: utf-8 -*-</code>, BAT <code>chcp 65001 &gt; nul</code>, 저널과 LISP는 비ASCII를 유니코드 이스케이프로 치환하는 <code>toUnicodeEscape()</code> 유틸 신설</li>
+      <li><strong>경로</strong> — 전 경로 큰따옴표 인용, 역슬래시 정규화, 공백·한글 포함 시 프리플라이트 경고</li>
+      <li><strong>브리지</strong> — 지수 백오프 재시도(0.5 → 1 → 2 → 4초, 최대 5회) + 헬스체크 선행 호출로 콜드스타트 대응, 실패 시 수동 실행 폴백 안내</li>
+    </ul>
+<pre><code>async function bridgeFetch(url,opt={},max=5){
+  for(let i=0;i&lt;max;i++){
+    try{ const r=await fetch(url,{...opt,cache:"no-store"}); if(r.ok) return r; }
+    catch(e){ /* connection refused → 재시도 */ }
+    await new Promise(s=&gt;setTimeout(s,500*2**i));
+  }
+  throw new Error("로컬 브리지 연결 실패 — 생성된 스크립트를 수동 실행하세요.");
+}</code></pre>
+    <div class="ac"><div class="h">수용기준</div><ul><li>서버 미기동 상태에서 앱이 멈추지 않고 5회 재시도 후 수동 실행 안내로 전환</li></ul></div>
+  </div>
+
+  <div class="feat p2">
+    <div class="hd"><span class="fid">F-08</span><h3>Revit Toposolid 서브디비전 템플릿</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">§5.1 — <code>Toposolid.CreateSubDivision()</code> 기반 지형 논리 분할</div>
+    <p>코리더 링크 · 형상선 외곽선을 JSON으로 내보내고, Revit에서 포장(Asphalt) · 길어깨(Shoulder) · 식수대(Planting)를 분할해 재질 파라미터를 자동 부여하는 템플릿(<code>revit_toposolid</code>)을 추가한다. 연구자료 스니펫에 <strong>트랜잭션 예외 처리 · 경계 CurveLoop 유효성(자기교차 · 미폐합) 사전 검사 · 실패 측점 로그</strong>를 보강한다.</p>
+  </div>
+
+  <div class="feat p2">
+    <div class="hd"><span class="fid">F-09</span><h3>IFC 4.3 · LandXML 내보내기와 가상 분할</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">§2.3 MINnD · §2.8 싱가포르 디지털 트윈</div>
+    <ul>
+      <li><strong>LandXML</strong> — 선형 · 횡단면(CrossSects) · 표면 표준 내보내기</li>
+      <li><strong>가상 분할</strong> — 코리더 솔리드를 측점 구간별로 분할하고 4D(공정 ID, 착수·완료일) · 5D(단가 코드, 물량) 속성을 주입하는 Dynamo 스크립트 생성</li>
+      <li><strong>IFC 4.3 매핑</strong> — <code>IfcAlignment</code> · <code>IfcCourse</code> · <code>IfcEarthworksCut</code> · <code>IfcEarthworksFill</code> 매핑 정의를 앱 내 문서 탭으로 제공</li>
+    </ul>
+  </div>
+
+  <div class="feat p2">
+    <div class="hd"><span class="fid">F-10</span><h3>하류 핸드오프 계약</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">§2.1 InfoDrainage 통합 · §1 하류의 절대 기준값</div>
+    <div class="tbl"><table>
+      <thead><tr><th>하류 노드</th><th>전달 항목</th></tr></thead>
+      <tbody>
+        <tr><td class="w">배수 (InfoDrainage 등)</td><td>계획고, 횡단경사, 측구 위치·형식, 유역 경계 후보(사면 최외곽선), 불투수 면적</td></tr>
+        <tr><td class="w">포장</td><td>차로폭, 편경사, 포장층 두께 구성, 노상 표고</td></tr>
+        <tr><td class="w">구조 (Revit)</td><td>교대·교각 실좌표(N/E), 계획고, 사면 접속부 형상선, <code>stype</code> 구간표</td></tr>
+        <tr><td class="w">공정 · 공사비</td><td>측점별 절·성 물량(자연 · 다짐 · 흐트러진 상태 3종), 지층별 분리 물량</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="feat p2">
+    <div class="hd"><span class="fid">F-11</span><h3>드론 포인트클라우드 EG 체적 변화 추적</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">§2.6 — 한국 폐석회 매립지 사례</div>
+    <p>주기적 드론 측량으로 갱신되는 EG 표면을 다중 버전으로 보관하고 DG 대비 기간별 체적 변화를 추적한다. 특수토는 함수비 건조 소요 시간을 입력받아 반출 가능 시점과 운반 계획에 반영하는 보조 계산기를 제공한다.</p>
+  </div>
+
+  <div class="feat p2">
+    <div class="hd"><span class="fid">F-12</span><h3>MCP 호환 컨텍스트 · LOD 성능 제어</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">§1 MCP · §5.3 MMS 최적화 · §6 SSOT</div>
+    <ul>
+      <li><strong>MCP 컨텍스트 노출</strong> — 검증 결과 · 물량 · 게이트 상태를 기계 판독 가능한 단일 JSON으로 항상 최신화. 향후 AI 도구가 질의할 단일 진실 공급원 역할</li>
+      <li><strong>표면 LOD 제어</strong> — 작업 중에는 <code>draft</code>(뷰포트 최소 해상도, 국소 Bounding Box 갱신), LandXML·IFC 내보내기 직전에만 <code>high</code>로 자동 승격 후 원복</li>
+    </ul>
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="sn">05</span>화면 재설계</h2>
+  <p class="sub">기존 단일 흐름을 입력 → 검증 → 산출 → 내보내기 4구역으로 재편한다.</p>
+  <div class="steps">
+    <div class="step new"><div class="no">STEP 0 · 신규</div><div class="nm">프로젝트 · 좌표계</div><div class="ds">EPSG 선택, 합성좌표 판정 배너, 상류 JSON 로드</div></div>
+    <div class="step"><div class="no">STEP 1 · 개선</div><div class="nm">표준횡단 정의</div><div class="ds">Assembly 파라미터, 단면 미리보기</div></div>
+    <div class="step"><div class="no">STEP 2 · 개선</div><div class="nm">측점 테이블</div><div class="ds">stype · 실좌표 · 비고 태그, 위반 행 하이라이트</div></div>
+    <div class="step"><div class="no">STEP 3 · 개선</div><div class="nm">횡단 검토 캔버스</div><div class="ds">단면 뷰 + 절·성 면적, 사면 미도달 표시</div></div>
+    <div class="step new"><div class="no">STEP 4 · 신규</div><div class="nm">체적 산출</div><div class="ds">3기법 비교표, 곡률보정 토글, 불일치 경보</div></div>
+    <div class="step new"><div class="no">STEP 5 · 신규</div><div class="nm">토량 배분</div><div class="ds">L/C 계수 편집, 누가토량곡선, 사토·토취 요약</div></div>
+    <div class="step new"><div class="no">STEP 6 · 신규</div><div class="nm">게이트 대시보드</div><div class="ds">P0/P1/P2 위반 목록, 차단 상태, 조치 권고</div></div>
+    <div class="step"><div class="no">STEP 7 · 개선</div><div class="nm">스크립트 생성</div><div class="ds">플랫폼 8종 + 구조물 타겟 스위칭 옵션</div></div>
+    <div class="step new"><div class="no">STEP 8 · 신규</div><div class="nm">내보내기 · 핸드오프</div><div class="ds">JSON v2 / LandXML / IFC 매핑 / 하류 계약 요약</div></div>
+  </div>
+  <p><strong>전역 상태 배지</strong> — 헤더에 <code>CRS ✔ | REBUILD ✔ | VOLUME ✔ | GATE 2 warn</code> 형태로 상시 표시해, 어느 단계에 있든 파이프라인 건강도가 한눈에 읽히게 한다.</p>
+</section>
+
+<section id="s6">
+  <h2><span class="sn">06</span>스크립트 생성기 확장</h2>
+  <p class="sub">기존 4종에서 8종으로. 공통 헤더에 게이트 통과 여부를 각인한다.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>키</th><th>플랫폼</th><th>언어</th><th>구분</th><th>주 용도</th></tr></thead>
+    <tbody>
+      <tr><td class="id">dynamo</td><td>Dynamo for Civil 3D</td><td>Python</td><td class="w"><span class="tag t-n">개선</span></td><td>코리더 조회 · 리빌드 · 물량 추출</td></tr>
+      <tr><td class="id">civil3d_python</td><td>Civil 3D</td><td>Python</td><td class="w"><span class="tag t-n">개선</span></td><td>복합토량 산출 · 표면 비교</td></tr>
+      <tr><td class="id">civil3d_csharp</td><td>Civil 3D .NET</td><td>C#</td><td class="w"><span class="tag t-n">개선</span></td><td>대량 측점 처리 (.NET 8 대응)</td></tr>
+      <tr><td class="id">revit_csharp</td><td>Revit Add-in</td><td>C#</td><td class="w"><span class="tag t-n">개선</span></td><td>구조물 배치 좌표 검증</td></tr>
+      <tr><td class="id">revit_toposolid</td><td>Revit API</td><td>Python</td><td class="w"><span class="tag t-new">신규</span></td><td>Toposolid 서브디비전 분할</td></tr>
+      <tr><td class="id">corridor_target</td><td>Dynamo</td><td>Python</td><td class="w"><span class="tag t-new">신규</span></td><td>교량·터널 구간 타겟 스위칭</td></tr>
+      <tr><td class="id">landxml_ifc</td><td>내보내기</td><td>XML / IFC</td><td class="w"><span class="tag t-new">신규</span></td><td>LandXML · IFC 4.3 매핑 산출</td></tr>
+      <tr><td class="id">lisp_batch</td><td>AutoCAD LISP + BAT</td><td>LISP / BAT</td><td class="w"><span class="tag t-n">개선</span></td><td>UTF-8 · 경로 인용 · 재시도 내장</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note crit"><div class="h">오용 방지</div><p>모든 템플릿 공통 헤더에 <code>schema_version</code>, 생성 시각, <strong>게이트 통과 여부</strong>를 주석으로 각인한다. 차단 상태에서 생성된 스크립트가 현장에서 정상 성과품으로 오용되는 것을 막기 위해서다.</p></div>
+</section>
+
+<section id="s7">
+  <h2><span class="sn">07</span>검증 · 테스트</h2>
+  <p class="sub">앱 내 <code>QA/SELFTEST</code> 러너가 자동 실행하는 골든 케이스.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>시나리오</th><th>기대 결과</th></tr></thead>
+    <tbody>
+      <tr><td class="id">T-01</td><td>EPSG 미기재 + 곡선 선형</td><td>G-01 차단, 사유 2건 이상</td></tr>
+      <tr><td class="id">T-02</td><td>정상 EPSG:5186 직선 구간</td><td>전 게이트 통과, 3기법 편차 &lt; 1%</td></tr>
+      <tr><td class="id">T-03</td><td>R=60 m 급곡선 + 편측 확폭</td><td>AEA vs Composite TIN 적색 경보</td></tr>
+      <tr><td class="id">T-04</td><td>선형 변경 후 리빌드 누락</td><td>G-03 차단</td></tr>
+      <tr><td class="id">T-05</td><td>발파암 40% 포함</td><td>사토량이 기하 체적 대비 증가 표기</td></tr>
+      <tr><td class="id">T-06</td><td>교량·터널 구간 3개</td><td>타겟 스위칭 스크립트 구간 정확</td></tr>
+      <tr><td class="id">T-07</td><td>한글 + 공백 경로</td><td>경고 후 인용 처리된 스크립트 생성</td></tr>
+      <tr><td class="id">T-08</td><td>브리지 미기동</td><td>5회 재시도 후 수동 실행 안내</td></tr>
+    </tbody>
+  </table></div>
+  <h3>교차 검증 (평행 모델링)</h3>
+  <p>독일 실무의 평행 모델링(§2.2)을 차용해, 동일 구간을 ① 앱 산출값 ② Civil 3D 복합토량 직접 산출값 두 경로로 계산하고 편차 리포트를 생성한다. <strong>편차 ±2% 이내를 검수 통과 기준</strong>으로 제안한다.</p>
+</section>
+
+<section id="s8">
+  <h2><span class="sn">08</span>로드맵</h2>
+  <p class="sub">각 Phase 종료 시 단일 HTML 파일 하나만 교체하면 되도록 배포 단위를 유지한다.</p>
+  <div class="road">
+    <div class="phase">
+      <div class="when"><b>Phase 1</b>1–2주차</div>
+      <div class="what"><strong>무결성 게이트</strong> — F-01 좌표계 · F-02 체적 3중 엔진 · F-03 리빌드 신선도 · F-06 게이트 엔진</div>
+      <div class="out">차단형 게이트가 동작하는 앱, 골든 케이스 T-01 ~ T-04 통과</div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>Phase 2</b>3–4주차</div>
+      <div class="what"><strong>물량 신뢰도</strong> — F-04 토량변화율 · F-07 견고성, 화면 Step 4 · 5 · 6 신설</div>
+      <div class="out">누가토량곡선, 지층별 L/C 매핑, 인코딩·경로·재시도 방어</div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>Phase 3</b>5–7주차</div>
+      <div class="what"><strong>자동화 · 상호운용</strong> — F-05 타겟 스위칭 · F-08 Toposolid · F-09 IFC/LandXML · F-10 하류 계약</div>
+      <div class="out">스크립트 8종, 표준 포맷 내보내기, 하류 핸드오프 계약 확정</div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>Phase 4</b>8주차 ~</div>
+      <div class="what"><strong>고도화</strong> — F-11 드론 EG 추적 · F-12 MCP 컨텍스트와 LOD 제어 · 교차 검증 리포트</div>
+      <div class="out">AI 질의 가능한 단일 컨텍스트, 대형 모델 성능 제어</div>
+    </div>
+  </div>
+</section>
+
+<section id="s9">
+  <h2><span class="sn">09</span>리스크와 대응</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>리스크</th><th>영향</th><th>대응</th></tr></thead>
+    <tbody>
+      <tr><td>게이트 강제 차단에 대한 현장 반발</td><td class="w">도입 지연</td><td>Phase 1은 “경고 + 사유 기록 후 진행” 모드 병행, 2주 계도 후 차단 전환</td></tr>
+      <tr><td>기준값의 프로젝트별 상이</td><td class="w">오판정</td><td>전 계수 편집 가능 + <code>source</code> 표기 + 기본값 사용 시 배지</td></tr>
+      <tr><td>복합토량 계산의 브라우저 성능 한계</td><td class="w">대형 프로젝트 지연</td><td>측점 청크 처리 + Web Worker 검토, 삼각망 상한 경고</td></tr>
+      <tr><td>단일 파일 비대화 (962행 → 3천행 이상 예상)</td><td class="w">유지보수성 저하</td><td>모듈 배너 구획 엄수, 함수 200행 상한, 상수 테이블 최상단 집약</td></tr>
+      <tr><td>Civil 3D · Revit 버전별 API 차이</td><td class="w">스크립트 실패</td><td>템플릿에 대상 버전 명시 + 실행 전 버전 체크 코드 삽입</td></tr>
+      <tr><td>좌표 판정 휴리스틱의 오탐</td><td class="w">불필요한 차단</td><td>판정 근거를 항상 나열, 관리자 확인 체크박스로 1회 해제(사유 필수 기록)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s10">
+  <h2><span class="sn">10</span>즉시 착수 3건</h2>
+  <p class="sub">가장 적은 코드로 가장 큰 리스크를 걷어내는 순서.</p>
+  <ol>
+    <li><strong>F-01 좌표계 게이트</strong> — 단일 함수 + 배너로 구현 가능. 연구자료가 지목한 최대 리스크를 최소 비용으로 차단한다.</li>
+    <li><strong>F-02 체적 3기법 비교표</strong> — 기존 면적 데이터만으로 즉시 계산 가능. 곡선부 오차를 눈으로 보여주는 설득력이 가장 크다.</li>
+    <li><strong>F-07 인코딩 · 경로 · 재시도</strong> — 순수 방어 코드. 현장 장애 신고의 상당수를 바로 제거한다.</li>
+  </ol>
+  <div class="note"><div class="h">이 계획의 요지</div><p>Phase 1의 네 기능(F-01 · F-02 · F-03 · F-06)만 완료해도 Node 06은 <strong>“검토를 돕는 도구”에서 “잘못된 데이터를 하류로 내보내지 않는 게이트키퍼”로 성격이 바뀐다.</strong> 이후 물량 신뢰도(Phase 2)와 자동화·상호운용(Phase 3)을 얹는 순서를 권장한다.</p></div>
+</section>
+
+<section id="sA">
+  <h2><span class="sn">A</span>부록 — 추적표와 기본 파라미터</h2>
+  <p class="sub">연구자료의 모든 절이 어느 기능으로 흡수되었는지.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>연구자료</th><th>핵심 내용</th><th>대응 기능</th></tr></thead>
+    <tbody>
+      <tr><td class="id">§1</td><td>매개변수 무결성 · 동적 재구성</td><td>F-06, 설계원칙 3, 스키마 v2</td></tr>
+      <tr><td class="id">§1</td><td>MCP · 수평 선형 회귀(HRA)</td><td>F-12</td></tr>
+      <tr><td class="id">§1</td><td>좌표계 절대 동기화</td><td><strong>F-01</strong></td></tr>
+      <tr><td class="id">§2.1</td><td>미국 — InfoDrainage 수직 통합</td><td>F-10</td></tr>
+      <tr><td class="id">§2.2</td><td>독일 — 평행 모델링 · LOD</td><td>교차 검증, G-11</td></tr>
+      <tr><td class="id">§2.3</td><td>프랑스 — MINnD · 가상 분할</td><td>F-09</td></tr>
+      <tr><td class="id">§2.4</td><td>중국 — AHP · 3D-RRT*</td><td>상류 노드 영역 (참고)</td></tr>
+      <tr><td class="id">§2.5</td><td>러시아 — 다중 모델 지질</td><td>F-04 지층 매핑</td></tr>
+      <tr><td class="id">§2.6</td><td>한국 — 드론 · 폐석회</td><td>F-11</td></tr>
+      <tr><td class="id">§2.7</td><td>일본 — TCS-Net 역설계</td><td>F-11 확장 과제</td></tr>
+      <tr><td class="id">§2.8</td><td>싱가포르 — VDC · 간섭 검토</td><td>F-09, F-10</td></tr>
+      <tr><td class="id">§3</td><td>체적 산출 기법 비교</td><td><strong>F-02</strong></td></tr>
+      <tr><td class="id">§3</td><td>토량변화율</td><td><strong>F-04</strong></td></tr>
+      <tr><td class="id">§4</td><td>좌표 합성</td><td><strong>F-01</strong></td></tr>
+      <tr><td class="id">§4</td><td>코리더 타겟 단절</td><td><strong>F-03</strong></td></tr>
+      <tr><td class="id">§4</td><td>인코딩 · 포트</td><td><strong>F-07</strong></td></tr>
+      <tr><td class="id">§5.1</td><td>Toposolid 서브디비전</td><td>F-08</td></tr>
+      <tr><td class="id">§5.2</td><td>구조물 타겟 스위칭</td><td><strong>F-05</strong></td></tr>
+      <tr><td class="id">§5.3</td><td>MMS · LOD 최적화</td><td>F-12</td></tr>
+      <tr><td class="id">§6</td><td>SSOT · AI 수용</td><td>스키마 v2, F-12</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>기본 파라미터 초기값</h3>
+<pre><code>const PARAMS = {
+  schema_version: "2.0",
+  crs: { allowed:[5186,5185,5187,5188,5179], default:5186, source:"project" },
+  section: { xslope_default:0.02, xslope_range:[0.015,0.025],
+             lane_width_default:3.5, interval_line:20, interval_curve:10 },
+  slope: { cut:{ "토사":1.2, "리핑암":0.7, "발파암":0.5 },
+           fill:{ default:1.5 },
+           berm:{ trigger_height:5.0, min_width:1.0 } },
+  swell: { "토사":{L:1.25,C:0.88}, "리핑암":{L:1.35,C:1.02},
+           "발파암":{L:1.55,C:1.18} },   // ※ 프로젝트 토질조사값으로 대체 필수
+  volume: { method:"composite_tin", curvature_correction:true,
+            warn_deviation:0.03, error_deviation:0.07 },
+  bridge: { retries:5, backoff_ms:500, health_path:"/health" },
+  gate: { enforce_p0:true, allow_override_with_reason:true }
+};</code></pre>
+</section>
+
+<footer>
+  <p>이 계획서는 연구자료 「차세대 인프라 BIM: 표준횡단 및 횡단토공 데이터 파이프라인의 글로벌 실무 혁신과 고도화 가이드」와 저장소 내 동일 계열 앱 <code>BIM_Slope_EL_Automation.html</code>의 구조 분석을 근거로 작성되었다. 원본 <code>06_표준횡단_횡단토공</code> 앱 소스는 로컬 경로에 있어 직접 열람하지 않았으므로, 실제 소스 확인 후 함수 배치만 재매핑하면 된다. 사면 구배 · 횡단경사 · 토량변화율의 기본값은 착수용 참고치이며 프로젝트 기준(KDS · 도로설계편람 · 토질조사 보고서)으로 확정해야 한다.</p>
+</footer>
+
+</main>
+</div>
+</div>

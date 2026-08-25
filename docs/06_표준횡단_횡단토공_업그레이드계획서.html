@@ -1,4 +1,4 @@
-<title>횡단토공 게이트키퍼 계획</title>
+<title>횡단토공 물량 정확도 개정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=Noto+Serif+KR:wght@500;600;700&display=swap">
@@ -157,20 +157,20 @@ footer p{max-width:72ch}
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow">Node 06 · 표준횡단 · 횡단토공</div>
-  <h1>잘못된 데이터를 하류로 내보내지 않는 게이트키퍼</h1>
-  <p class="lede">글로벌 인프라 BIM 연구자료를 <code>06_표준횡단_횡단토공</code> HTML 앱에 투영한 업그레이드 계획. 핵심은 기능 추가가 아니라, 연구자료가 반복해 경고한 세 가지 데이터 오염을 앱이 <strong>통과시키지 않도록</strong> 만드는 것이다.</p>
+  <div class="eyebrow">Node 06 · assembly_cross_section_tool@1.0.1 · 계획서 v2.0</div>
+  <h1>산출된 물량이 아직 현장 물량이 아니다</h1>
+  <p class="lede">앱 소스 3,305행을 전수 분석한 결과, 이 도구에 부족한 것은 기능이 아니었다. 근거 레지스트리·게이트·핸드오프 계약·좌표 출처 추적은 이미 갖춰져 있다. 남은 문제는 <strong>물량 계산의 물리적 정확성 3건과 게이트의 차단력</strong>이다.</p>
   <div class="meta">
-    <span><b>버전</b> 계획서 v1.0</span>
+    <span><b>개정</b> v1.0 추정 계획 → v2.0 실측 계획</span>
     <span><b>작성</b> 2026-08-25</span>
-    <span><b>대상</b> 단일 파일 HTML 앱</span>
-    <span><b>근거</b> 「차세대 인프라 BIM: 표준횡단 및 횡단토공 데이터 파이프라인」</span>
+    <span><b>대상</b> 06 표준횡단과 횡단토공 v1.0.1</span>
+    <span><b>근거</b> 연구자료 + 앱 소스 전수 분석</span>
   </div>
   <div class="tiles">
-    <div class="tile"><div class="k">도출 갭</div><div class="v">13</div><div class="n">연구자료 6개 장 대비</div></div>
-    <div class="tile"><div class="k">차단 게이트</div><div class="v crit">3</div><div class="n">좌표 · 체적 · 리빌드</div></div>
-    <div class="tile"><div class="k">신규 기능</div><div class="v">12</div><div class="n">F-01 ~ F-12</div></div>
-    <div class="tile"><div class="k">로드맵</div><div class="v">4</div><div class="n">Phase · 약 8주</div></div>
+    <div class="tile"><div class="k">실측 결함</div><div class="v crit">8</div><div class="n">D-01 ~ D-08</div></div>
+    <div class="tile"><div class="k">물량 오차</div><div class="v crit">~11%</div><div class="n">포장 두께 미반영 (기본값)</div></div>
+    <div class="tile"><div class="k">유토 과소</div><div class="v crit">~13.6%</div><div class="n">성토 상태 혼용</div></div>
+    <div class="tile"><div class="k">계획 철회</div><div class="v">1</div><div class="n">양단면평균법 차단안</div></div>
   </div>
 </header>
 
@@ -179,491 +179,341 @@ footer p{max-width:72ch}
 <nav class="rail">
   <div class="lbl">목차</div>
   <ol>
-    <li><a href="#s0"><span class="n">00</span><span>전제와 범위</span></a></li>
-    <li><a href="#s1"><span class="n">01</span><span>갭 분석</span></a></li>
-    <li><a href="#s2"><span class="n">02</span><span>목표와 원칙</span></a></li>
-    <li><a href="#s3"><span class="n">03</span><span>아키텍처 · 스키마</span></a></li>
-    <li><a href="#s4"><span class="n">04</span><span>기능 명세</span></a></li>
-    <li><a href="#s5"><span class="n">05</span><span>화면 재설계</span></a></li>
-    <li><a href="#s6"><span class="n">06</span><span>스크립트 생성기</span></a></li>
-    <li><a href="#s7"><span class="n">07</span><span>검증 · 테스트</span></a></li>
-    <li><a href="#s8"><span class="n">08</span><span>로드맵</span></a></li>
-    <li><a href="#s9"><span class="n">09</span><span>리스크</span></a></li>
-    <li><a href="#s10"><span class="n">10</span><span>즉시 착수 3건</span></a></li>
-    <li><a href="#sA"><span class="n">A</span><span>추적표 · 파라미터</span></a></li>
+    <li><a href="#s0"><span class="n">00</span><span>개정 사유</span></a></li>
+    <li><a href="#s1"><span class="n">01</span><span>실측 현황</span></a></li>
+    <li><a href="#s2"><span class="n">02</span><span>철회한 방침</span></a></li>
+    <li><a href="#s3"><span class="n">03</span><span>실측 결함 8건</span></a></li>
+    <li><a href="#s4"><span class="n">04</span><span>개정 기능 명세</span></a></li>
+    <li><a href="#s5"><span class="n">05</span><span>구현 위치 매핑</span></a></li>
+    <li><a href="#s6"><span class="n">06</span><span>검증 계획</span></a></li>
+    <li><a href="#s7"><span class="n">07</span><span>로드맵</span></a></li>
+    <li><a href="#s8"><span class="n">08</span><span>우선 착수 3건</span></a></li>
+    <li><a href="#sA"><span class="n">A</span><span>연구자료 추적표</span></a></li>
   </ol>
 </nav>
 
 <main>
 
 <section id="s0">
-  <h2><span class="sn">00</span>전제와 범위</h2>
-  <p class="sub">원본 앱 소스를 직접 열람하지 않은 상태에서의 설계 계획임을 먼저 밝힌다.</p>
-
+  <h2><span class="sn">00</span>개정 사유</h2>
+  <p class="sub">v1.0은 앱 소스를 열람하지 못한 상태의 추정 계획이었다.</p>
   <div class="note">
-    <div class="h">이 계획의 근거 두 가지</div>
-    <p><strong>① 연구자료가 서술하는 Node 06의 역할</strong> — 상류(선형·종단)에서 JSON을 받아 표준횡단과 횡단토공을 검증하고, 하류(배수·포장·구조)로 파라미터를 전달하는 자동화 게이트키퍼. 로컬 HTTP 포트를 통해 Dynamo · AutoCAD LISP · Revit 저널 스크립트를 생성·구동한다.</p>
-    <p><strong>② 동일 계열 앱의 실제 구조</strong> — 저장소의 <code>BIM_Slope_EL_Automation.html</code>(962행, 단일 파일)에서 확인한 패턴: <code>steps[]</code> 기반 좌측 워크플로우 내비, 캔버스 + 우측 패널 2열, <code>REGULATIONS[]</code> + <code>checkCompliance()</code> 법규 게이트, <code>SCRIPT_TEMPLATES{}</code> 생성기와 <code>downloadScript()</code>, 외부 의존성 0의 오프라인 구동.</p>
-    <p>실제 소스 확인 후에는 <strong>함수 배치(구현 위치)만 재매핑</strong>하면 되며, 기능 명세 · 수용기준 · 데이터 스키마는 그대로 유효하다.</p>
+    <div class="h">v1.0 → v2.0 에서 바뀐 것</div>
+    <p><strong>① 이미 구현된 항목 8건을 계획에서 삭제</strong> — EPSG 화이트리스트, 합성좌표 표식, 스키마 버저닝, 근거 레지스트리, 게이트 골격, 누가토량곡선, LandXML, 구조물 구간 인지는 모두 이미 있다.</p>
+    <p><strong>② 실측으로 발견한 결함 8건을 신설</strong> — 소스를 읽지 않고는 알 수 없었던, 물량 숫자를 직접 바꾸는 결함들이다.</p>
+    <p><strong>③ 양단면평균법 차단 방침을 철회</strong> — 앱이 이미 내장한 국토부 BIM 시행지침 조항이 이를 허용한다(§02).</p>
   </div>
-
-  <p><strong>범위 안</strong> — 단일 파일 HTML 앱 내부의 계산 엔진, 검증 게이트, 화면 단계, 스크립트 생성기, JSON 스키마, 견고성과 성능.<br>
-  <strong>범위 밖</strong> — Civil 3D · Revit 본체 애드인 개발, 서버 인프라 구축, 유상 도구 도입.</p>
 </section>
 
 <section id="s1">
-  <h2><span class="sn">01</span>갭 분석</h2>
-  <p class="sub">연구자료의 6개 장을 앱에 투영해 도출한 13개 갭. 심각도는 프로젝트 붕괴 가능성 기준.</p>
-  <div class="tbl">
-  <table>
-    <thead><tr><th>ID</th><th>연구자료 근거</th><th>요구 역량</th><th>현행 추정</th><th>심각도</th></tr></thead>
+  <h2><span class="sn">01</span>실측 현황 — 앱은 이미 어디까지 와 있는가</h2>
+  <p class="sub">3,305행 단일 파일, script 블록 7개, 외부 의존성 0. 8단계 워크플로우.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>영역</th><th>실측 내용</th></tr></thead>
     <tbody>
-      <tr><td class="id">G-01</td><td class="w">§4 좌표 합성 왜곡</td><td>EPSG 미기재 데이터의 파이프라인 강제 차단</td><td>비고 태그만 표기, 진행 허용</td><td class="w"><span class="tag t-p0">치명적</span></td></tr>
-      <tr><td class="id">G-02</td><td class="w">§3 양단면평균법 오차</td><td>복합토량 강제 + 곡선부 편심 보정</td><td>AEA 값 수용 가능</td><td class="w"><span class="tag t-p0">치명적</span></td></tr>
-      <tr><td class="id">G-03</td><td class="w">§3 토량변화율</td><td>지층별 L/C 계수 동적 매핑</td><td>순수 기하 체적만</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
-      <tr><td class="id">G-04</td><td class="w">§4 코리더 타겟 단절</td><td>타겟 무결성 · Rebuild 신선도 검사</td><td>검사 없음</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
-      <tr><td class="id">G-05</td><td class="w">§5.2 타겟 스위칭</td><td>교량 · 터널 구간 사면 타겟 자동 전환</td><td>수작업</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
-      <tr><td class="id">G-06</td><td class="w">§5.1 Toposolid</td><td>포장층 · 길어깨 · 식수대 논리 분할</td><td>템플릿 없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
-      <tr><td class="id">G-07</td><td class="w">§2.3 IFC 4.3</td><td>측점 기반 가상 분할 + 4D/5D 속성</td><td>미지원 추정</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
-      <tr><td class="id">G-08</td><td class="w">§2.1 InfoDrainage</td><td>배수 노드 표준 핸드오프 페이로드</td><td>정의 없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
-      <tr><td class="id">G-09</td><td class="w">§4 인코딩 · 포트</td><td>UTF-8 강제, 경로 인용, 콜드스타트 재시도</td><td>산발적 대응</td><td class="w"><span class="tag t-p1">높음</span></td></tr>
-      <tr><td class="id">G-10</td><td class="w">§5.3 MMS · LOD</td><td>표면 디테일 수준 제어 루틴</td><td>없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
-      <tr><td class="id">G-11</td><td class="w">§1 · §6 MCP</td><td>검증 결과의 기계 판독 컨텍스트</td><td>없음</td><td class="w"><span class="tag t-p2">중간</span></td></tr>
-      <tr><td class="id">G-12</td><td class="w">§2.6 드론 EG/DG</td><td>포인트클라우드 기반 체적 변화 추적</td><td>없음</td><td class="w"><span class="tag t-n">낮음</span></td></tr>
-      <tr><td class="id">G-13</td><td class="w">§2.2 평행 모델링</td><td>2개 산출 경로 교차 검증 리포트</td><td>없음</td><td class="w"><span class="tag t-n">낮음</span></td></tr>
+      <tr><td class="w">근거 레지스트리</td><td><code>KDS_CONSTANTS</code> 8항목 — 각 항목에 <code>source·ref_doc·article·selection_guide·presets</code>, 일부에 <code>legal_min</code>/<code>legal_range</code>와 그 출처까지</td></tr>
+      <tr><td class="w">게이트</td><td><code>runLawGate()</code> — G1~G6(메타데이터 존재) + <strong>R01~R04(설계값 실측)</strong>. 차로폭·횡단경사·길어깨·사면구배를 레지스트리 값과 대조</td></tr>
+      <tr><td class="w">좌표계</td><td><code>EPSG_ALLOWED = [5179, 5185, 5186, 5187, 5188]</code>, 셀렉터를 단일 정본으로 동기화하는 change 리스너</td></tr>
+      <tr><td class="w">좌표 무결성</td><td><code>APP_STATE.coordSynthetic</code>(기본 true) + 측점별 <code>xy_src</code>, 전 산출물에 경고 문구 삽입</td></tr>
+      <tr><td class="w">체적</td><td><code>calcVolumes()</code> — 양단면평균법 / 각주공식 2종. 각주공식은 중간고에서 단면적을 재산정(수학적 동일화 함정 회피)</td></tr>
+      <tr><td class="w">사면</td><td><code>calcCutSlopeWidth()</code>·<code>calcCutSideArea()</code> — 5 m/1 m 소단, 20 m/3 m 대소단 계단식 적분</td></tr>
+      <tr><td class="w">스크립트</td><td>Dynamo 4종 — assembly · corridor · sampleline · coord</td></tr>
+      <tr><td class="w">상호운용</td><td><code>cross_section_output/v1</code> + fnv1a 체크섬, LandXML 1.2, CSV 3종</td></tr>
+      <tr><td class="w">생태계 표준</td><td><code>deliberation-std/v1</code>(심의 T1/T2/T3) · <code>decision-scan-std/v1</code> · <code>handoff-contract-std/v2</code> + <code>HANDOFF_BIND</code> · <code>BIM_GUIDELINE_BASIS</code> 5건</td></tr>
     </tbody>
-  </table>
-  </div>
+  </table></div>
+  <div class="note"><div class="h">주목할 점</div><p>소스 곳곳에 <code>[정정 2026-08-10 전수감사]</code> 형태의 감사 이력 주석이 남아 있다. 좌표 합성값을 실좌표처럼 반출하던 문제, EPSG 셀렉터가 두 좌표계를 동시에 주장하던 문제 등이 이미 자체적으로 적발·수정되어 있다. 이 계획은 그 위에 쌓는다.</p></div>
 </section>
 
 <section id="s2">
-  <h2><span class="sn">02</span>목표와 설계 원칙</h2>
-  <p class="sub">무엇을 지키기 위한 업그레이드인가.</p>
-
-  <h3>목표</h3>
-  <ul>
-    <li><strong>O1 · 무결성 우선</strong> — 좌표 · 타겟 · 체적 3대 오염원을 앱이 차단한다. 경고가 아니라 게이트다.</li>
-    <li><strong>O2 · 물량 신뢰도</strong> — 기하 체적에서 시공 체적으로 격상(토량변화율 반영, 운반 계획 연동).</li>
-    <li><strong>O3 · 파이프라인 연속성</strong> — 상·하류 데이터가 JSON · LandXML · IFC 4.3 표준 스키마로만 유동.</li>
-    <li><strong>O4 · 반복 작업 제거</strong> — 구조물 구간 타겟 스위칭, 지형 분할, LOD 제어를 스크립트로 자동 생성.</li>
-    <li><strong>O5 · 견고성</strong> — 한글 경로 · 공백 경로 · 콜드스타트에서 실패하지 않는다.</li>
-  </ul>
-
-  <h3>설계 원칙</h3>
-  <ol>
-    <li><strong>단일 파일 유지</strong> — 외부 CDN과 빌드 도구 없이 오프라인 더블클릭 구동(현장 보안망 대응).</li>
-    <li><strong>게이트는 하드 블록</strong> — P0 위반 시 하류 내보내기 버튼을 <code>disabled</code> 처리.</li>
-    <li><strong>계수 하드코딩 금지</strong> — 모든 기준값은 편집 가능한 <code>PARAMS</code> 객체 + 프로젝트 JSON 오버라이드.</li>
-    <li><strong>산출값에 출처 표기</strong> — 결과 카드마다 산출 기법(<code>AEA</code> / <code>Prismoidal</code> / <code>Composite TIN</code>)과 신뢰도 배지.</li>
-    <li><strong>스키마 버저닝</strong> — 모든 입출력 JSON에 <code>schema_version</code>, 하위 호환 파서 유지.</li>
-  </ol>
+  <h2><span class="sn">02</span>철회한 방침 — 양단면평균법 차단</h2>
+  <p class="sub">v1.0의 F-02는 “AEA 선택 시 하류 내보내기 차단(P0)”을 요구했다. 국내 기준상 잘못된 요구였다.</p>
+  <div class="note crit">
+    <div class="h">앱이 이미 내장한 근거 — BIM_GUIDELINE_BASIS</div>
+    <p><strong>국토교통부 BIM 시행지침 설계자편 2.4.2 (2)</strong> — “토공 수량산출 시 원칙적으로 객체화된 BIM 모델에 의한 체적법을 적용할 수 있으나, <strong>발주자가 인정하는 경우에는 기존 양단면 평균법을 적용할 수 있다.</strong> 수량 기초데이터 신뢰도 확보를 위해 BIM 객체 간 간섭 검토 등 품질검토를 반드시 수행한다.”</p>
+  </div>
+  <p>따라서 올바른 게이트는 <strong>기법을 막는 것이 아니라 근거 없는 기법 선택을 막는 것</strong>이다. 개정안은 양단면평균법 선택 시 <strong>발주자 인정 근거 입력을 필수화</strong>하고, 연구자료 §3이 경고한 급곡선 왜곡은 <strong>곡률 보정과 기법 간 편차 경보</strong>로 통제한다.</p>
 </section>
 
 <section id="s3">
-  <h2><span class="sn">03</span>아키텍처와 데이터 스키마</h2>
-  <p class="sub">단일 파일 안에서의 논리 구획과, 상류 → Node 06 → 하류 계약.</p>
+  <h2><span class="sn">03</span>실측 결함 8건</h2>
+  <p class="sub">앱 소스에서 직접 확인한 물량·파이프라인 결함. 이번 개정의 핵심이다.</p>
 
-  <h3>모듈 구획</h3>
-  <p>기존 주석 배너 패턴을 유지하되 다음 블록으로 재편한다.</p>
-  <pre><code>[A] CORE/PARAMS     기준값 · 계수 테이블 (좌표계, L/C, 사면구배, 임계값)
-[B] CORE/GEODESY    좌표계 검증, EPSG 화이트리스트, 합성좌표 탐지
-[C] CORE/VOLUME     AEA / Prismoidal / Composite TIN / 곡률보정 / 토량변화율
-[D] CORE/MASSHAUL   누가토량곡선, 유용 · 사토 · 토취 배분, 운반거리
-[E] GATE/VALIDATOR  게이트 규칙 엔진(P0/P1/P2), 차단 상태 관리
-[F] IO/SCHEMA       JSON v2 파서 · 직렬화, LandXML · IFC 4.3 내보내기
-[G] IO/BRIDGE       로컬 HTTP 브리지 (인코딩 · 경로 · 재시도)
-[H] GEN/SCRIPTS     플랫폼별 스크립트 템플릿
-[I] UI/STEPS        단계 내비 + 패널 렌더
-[J] QA/SELFTEST     골든 케이스 자체 검증 러너</code></pre>
+  <div class="feat p0">
+    <div class="hd"><span class="fid">D-01</span><h3>포장 구조 두께가 토공 단면에 반영되지 않음</h3><span class="tag t-p0">P0</span></div>
+    <div class="src"><code>calcCutArea()</code> · <code>calcFillArea()</code></div>
+    <p><code>calcCutArea()</code>는 <code>halfRoad × cutH</code>로 노반부를 계산한다. 포장층 입력(<code>pave1·pave2·base·subbase</code>)은 <code>drawAssembly()</code>와 Dynamo 스크립트, 핸드오프의 <code>pavement_total_m</code>에서만 쓰인다. UI가 DG를 <strong>“도로 설계 표고”(포장 상면)</strong>로 정의하므로 노상 절하만큼 토공이 통째로 누락된다.</p>
+<pre><code>포장 합계   0.05 + 0.05 + 0.15 + 0.20 = 0.45 m
+전폭        2 × (3.5 + 1.5)          = 10.0 m
+측점당 결손 10.0 × 0.45              = 4.5 ㎡
 
-  <h3>데이터 스키마 v2</h3>
-  <pre><code>{
-  "schema_version": "2.0",
-  "node": "06_standard_section_earthwork",
-  "project": {
-    "crs": { "epsg": 5186, "name": "Korea 2000 / Central Belt 2010",
-             "vertical": "KVD2002",
-             "source": "declared" }        // declared | inherited | SYNTHESIZED → 차단
-  },
-  "alignment": {
-    "geometry_hash": "sha1:…",             // 상류 변경 감지
-    "elements": [ { "type": "line|arc|clothoid", "sta_in": 0, "sta_out": 320.5,
-                    "radius": null, "A": null } ]
-  },
-  "sections": [
-    { "sta": 100.0,
-      "stype": "E",                        // E 토공 · B 교량 · T 터널 · C 컬버트
-      "northing": 412345.678, "easting": 198765.432,   // 실좌표 필수
-      "lane_width": 3.5, "cross_slope": -0.02,
-      "cut_slope": "1:1.2", "fill_slope": "1:1.5",
-      "area_cut": 12.34, "area_fill": 45.67,
-      "soil": { "layers": [ {"type":"토사","thick":2.1},
-                            {"type":"발파암","thick":5.4} ] },
-      "target_status": { "daylight": "surface:EG", "width": "linked", "broken": false } }
-  ],
-  "volumes": { "method": "composite_tin", "curvature_corrected": true,
-               "cut_bank_m3": 128450.2, "fill_compacted_m3": 96320.7 },
-  "corridor": { "last_rebuild": "2026-08-25T09:12:00+09:00",
-                "auto_rebuild": true, "surface_lod": "draft" },
-  "gates": { "passed": false, "blocking": ["G-01-CRS-SYNTHESIZED"] }
-}</code></pre>
+절토고 3 m 기준 현재 산출 단면적
+  2 × (5.0 × 3 + 5.4) = 40.8 ㎡   →  결손 약 11%
+  (절토고 1 m 구간에서는 30% 이상)</code></pre>
+    <div class="ac"><div class="h">조치</div><ul>
+      <li>절·성토고를 <code>cfh = eg − (dg − pavementTotal)</code>로 재정의</li>
+      <li>계획고 정의(포장상면 / 노상면) 선택 스위치를 Step 3에 신설하고 선택값을 핸드오프에 수록</li>
+    </ul></div>
+  </div>
 
-  <p><strong>핵심 변경점</strong> — ① <code>crs</code> 블록과 <code>SYNTHESIZED</code> 열거값 신설 ② <code>stype</code>으로 구조물 구간 명시 ③ <code>soil.layers</code>로 지층별 토량변화율 매핑 근거 확보 ④ <code>target_status</code>와 <code>corridor.last_rebuild</code>로 코리더 신선도 검증 ⑤ <code>gates</code>로 게이트 결과 자체를 하류에 전달.</p>
+  <div class="feat p0">
+    <div class="hd"><span class="fid">D-02</span><h3>유토곡선이 자연상태 절토와 다짐상태 성토를 그대로 감산</h3><span class="tag t-p0">P0</span></div>
+    <div class="src"><code>drawMassHaul()</code> — <code>cum += v.cutVol − v.fillVol</code></div>
+    <p>두 값의 상태가 다르다. 성토량은 다짐(Compacted), 절토량은 자연(Bank) 상태다. 성토에 필요한 자연토량은 <code>V_fill / C</code>이므로, 토사 <code>C ≈ 0.88</code> 적용 시 <strong>약 13.6% 과소</strong>다. 곡선이 실제보다 낙관적으로 그려져 <strong>사토 과다·토취 누락</strong> 판단을 유발한다.</p>
+<pre><code>현행   cum = Σ(cutVol) − Σ(fillVol)
+교정   cum = Σ(cutVol) − Σ(fillVol / C_layer)</code></pre>
+    <div class="ac"><div class="h">조치</div><ul><li>자연상태 기준으로 통일하고, 자유 운반거리(Free Haul)와 초과 운반 구간을 음영 표기</li></ul></div>
+  </div>
+
+  <div class="feat p0">
+    <div class="hd"><span class="fid">D-03</span><h3>핸드오프가 측점 5개만 하류로 전달</h3><span class="tag t-p0">P0</span></div>
+    <div class="src"><code>exportHandoff()</code> — <code>sections_sample: APP_STATE.sections.slice(0, 5)</code></div>
+    <p>합계 물량은 전량이 실리지만 측점별 데이터는 앞 5개뿐이다. 하류 앱이 측점별로 재검증할 방법이 없다. 연구자료 §6의 SSOT 원칙과 정면 충돌한다.</p>
+    <div class="ac"><div class="h">조치</div><ul><li><code>sections_full[]</code> 전량 수록(측점 500 초과 시 <code>sections_ref</code> 분리 파일 병행), <code>sections_sample</code>은 미리보기 전용으로 명칭 변경</li></ul></div>
+  </div>
+
+  <div class="feat p0">
+    <div class="hd"><span class="fid">D-04</span><h3>좌표 합성이 “경고 문구”일 뿐 반출을 막지 않음</h3><span class="tag t-p0">P0</span></div>
+    <div class="src"><code>exportLandXML</code> · <code>exportBridgeCoordCSV</code> · <code>genCoordScript</code> · <code>exportAll</code></div>
+    <p><code>coordSynthetic === true</code>여도 세 산출물이 경고 주석만 덧붙인 채 정상 반출된다. 교각 좌표는 소수 3자리(mm)로 찍힌다. 연구자료 §4가 “파이프라인 진행을 차단하라”고 명시한 바로 그 지점이다.</p>
+    <div class="ac"><div class="h">조치</div><ul>
+      <li>좌표 소비 산출물 3종만 차단하고 물량 CSV 등은 통과 — 작업을 완전히 막지는 않는다</li>
+      <li>관리자 1회 해제 경로(사유 필수)를 두되 해제 사실을 핸드오프 <code>gates.override[]</code>에 기록</li>
+    </ul></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">D-05</span><h3>지반유형은 측점마다 있는데 토량변화율은 전역 단일값</h3><span class="tag t-p1">P1</span></div>
+    <div class="src"><code>calcVolumes()</code> — <code>costCut = totalCut × swell × cutUnit × coeff</code></div>
+    <p>측점 레코드에 <code>gtype</code>(soil/ripping/blast)이 이미 있고 사면 구배도 유형별로 분리되어 있다. 그런데 <code>swell-factor</code>는 전역 입력 하나(기본 1.25)이며, 그마저 <strong>공사비 계산에만</strong> 곱해진다. 물량과 유토 계획에는 전혀 반영되지 않는다.</p>
+    <div class="ac"><div class="h">조치</div><ul><li><code>SWELL_REGISTRY</code>를 <code>KDS_CONSTANTS</code>와 같은 근거 필드 구조(<code>source·ref_doc</code>)로 신설하고 <code>gtype</code> 자동 매핑. 전역 입력은 “일괄 덮어쓰기” 옵션으로 강등</li></ul></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">D-06</span><h3>구조물 구간 물량이 0 — 접속부 토공 누락</h3><span class="tag t-p1">P1</span></div>
+    <div class="src"><code>calcAllSections()</code> <code>if (s.stype === 'R')</code> · <code>calcVolumes()</code> <code>s1.stype==='R' &amp;&amp; s2.stype==='R'</code></div>
+    <p>교대 뒤채움, 터널 갱구부 절취, 토공↔구조물 접속부(연구자료 §5.2의 트랜지션) 물량이 전량 누락된다.</p>
+    <div class="ac"><div class="h">조치</div><ul><li>구조물 경계 전후 트랜지션(기본 20 m)을 <code>stype='X'</code>로 분류해 별도 산출하고, 같은 구간 정의를 F-05 타겟 스위칭 스크립트와 공유</li></ul></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">D-07</span><h3>단가·파일명 타임스탬프 하드코딩</h3><span class="tag t-p1">P1</span></div>
+    <div class="src"><code>calcVolumes()</code> · 전 export 함수</div>
+    <ul>
+      <li><code>var cutUnit = 8500, fillUnit = 12000;</code> — 출처도 기준연도도 없다. 모든 기준값에 <code>source</code>를 강제하는 앱 자체 원칙과 불일치한다.</li>
+      <li>전 내보내기 파일명이 <code>..._20260724_201932.{csv,json,xml,py}</code> <strong>고정 문자열</strong>. 같은 날 여러 번 내보내면 서로 덮어쓰이고, 생성 시각을 파일명으로 추적할 수 없다.</li>
+    </ul>
+    <div class="ac"><div class="h">조치</div><ul><li><code>COST_REGISTRY</code> 분리(기준연도 필수), <code>tsStamp()</code> 유틸로 파일명 동적 생성</li></ul></div>
+  </div>
+
+  <div class="feat p2">
+    <div class="hd"><span class="fid">D-08</span><h3>정확도 · 상호운용 세부</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">다수</div>
+    <ul>
+      <li><strong>횡단경사 미반영</strong> — <code>cross-slope</code> 입력이 단면적 계산에 들어가지 않는다(반폭 5 m·2% 기준 약 1.2% 편차).</li>
+      <li><strong>LandXML 곡선 부재</strong> — 측점 간을 전부 <code>&lt;Line&gt;</code>으로 잇는다. 실좌표를 받아도 곡선은 현(弦) 근사가 되고, <code>&lt;CrossSects&gt;</code>·<code>&lt;Surface&gt;</code>가 없어 횡단 정보가 실리지 않는다.</li>
+      <li><strong>게이트 부수효과</strong> — <code>runLawGate()</code>가 <code>showStep(7)</code>로 화면을 강제 이동시킨다. API·심의 경로 호출 시 사용자 맥락을 빼앗는다.</li>
+    </ul>
+  </div>
 </section>
 
 <section id="s4">
-  <h2><span class="sn">04</span>기능 명세</h2>
-  <p class="sub">우선순위 — <span class="tag t-p0">P0</span> 차단 게이트, 즉시 · <span class="tag t-p1">P1</span> 핵심 계산과 자동화 · <span class="tag t-p2">P2</span> 상호운용과 고도화</p>
+  <h2><span class="sn">04</span>개정 기능 명세</h2>
+  <p class="sub">결함 대응과 연구자료 반영을 하나의 명세로 통합했다.</p>
 
   <div class="feat p0">
-    <div class="hd"><span class="fid">F-01</span><h3>좌표계 무결성 게이트</h3><span class="tag t-p0">P0</span></div>
-    <div class="src">§4 — “가장 대표적이고 파괴적인 오류는 좌표 합성 왜곡”</div>
-    <p>상류 JSON 로드 시 <code>project.crs.epsg</code>를 최우선 검사하고, 한국 투영 좌표 화이트리스트(5186 중부 · 5185 서부 · 5187 동부 · 5188 동해 · 5179 UTM-K)와 대조한다. 다음 휴리스틱 중 하나라도 참이면 <strong>합성좌표</strong>로 판정한다.</p>
-    <ul>
-      <li>측점 실좌표 필드 결측</li>
-      <li><strong>선형에 곡선 요소가 있는데 모든 좌표가 완전 직선상 정렬</strong>(잔차 RMS &lt; 1e-6 m) — 가장 결정적인 지표</li>
-      <li>좌표가 국내 투영 유효 범위(N 100,000–800,000 / E 0–400,000) 이탈</li>
-      <li>원점이 (0,0) 근방 ±1,000 m — 상대좌표 의심</li>
-    </ul>
-    <p>판정 시 적색 배너, <strong>하류 내보내기 전면 차단</strong>, 측점 비고란 <code>좌표합성(Synthesized)</code> 태그, 상류 재발행 요청문 자동 생성.</p>
-<pre><code>function detectSynthesizedCRS(data){
-  const f=[], secs=data.sections||[];
-  if(!data.project?.crs?.epsg) f.push("EPSG 코드 미기재");
-  const hasCurve=(data.alignment?.elements||[]).some(e=&gt;e.type!=="line");
-  const pts=secs.filter(s=&gt;Number.isFinite(s.northing)&amp;&amp;Number.isFinite(s.easting));
-  if(pts.length&lt;secs.length) f.push("측점 실좌표 결측");
-  if(pts.length&gt;=3){
-    const n=pts.length,
-          mx=pts.reduce((a,p)=&gt;a+p.easting,0)/n,
-          my=pts.reduce((a,p)=&gt;a+p.northing,0)/n;
-    let sxx=0,sxy=0;
-    pts.forEach(p=&gt;{sxx+=(p.easting-mx)**2; sxy+=(p.easting-mx)*(p.northing-my);});
-    const k=sxx?sxy/sxx:0;
-    const rms=Math.sqrt(pts.reduce((a,p)=&gt;
-      a+((p.northing-my)-k*(p.easting-mx))**2,0)/n);
-    if(hasCurve &amp;&amp; rms&lt;1e-6) f.push("곡선 선형인데 좌표가 완전 직선 → 합성좌표 강력 의심");
-  }
-  return {synthesized:f.length&gt;0, reasons:f};
+    <div class="hd"><span class="fid">F-01</span><h3>좌표 게이트를 표기에서 차단으로 승격</h3><span class="tag t-p0">P0</span></div>
+    <div class="src">D-04 · 연구자료 §4</div>
+<pre><code>function guardCoord(what){
+  if (!APP_STATE.coordSynthetic) return true;
+  addActionLog(what+' 차단 — E/N 이 직선가정 합성값. '
+             + '상류 선형 실좌표 수신 후 재시도.', 'err');
+  return false;
+}
+// exportLandXML() 선두:  if (!guardCoord('LandXML 내보내기')) return;</code></pre>
+    <p>부분 합성(일부 측점만 실좌표) 판정을 추가하고, 실좌표 3점 외접원으로 <code>R</code>을 구해 <strong>곡선(R &lt; 3000 m)이면서 합성이면 경고를 치명으로 승격</strong>한다.</p>
+  </div>
+
+  <div class="feat p0">
+    <div class="hd"><span class="fid">F-02</span><h3>체적 기법 — 차단이 아니라 근거 기록 + 편차 경보</h3><span class="tag t-p0">P0</span><span class="tag t-new">v1.0 정정</span></div>
+    <div class="src">§02 철회 방침 반영 · 연구자료 §3</div>
+    <ol>
+      <li><code>vol-method</code>에 <strong><code>prismoidal_curve</code>(각주공식 + 곡률 보정)</strong> 추가</li>
+      <li>양단면평균법 선택 시 <strong>발주자 인정 근거 입력을 필수화</strong> — 미입력이면 내보내기 차단</li>
+      <li>세 기법을 항상 병렬 계산해 병기, 편차 3% 초과 황색 / 7% 초과 적색</li>
+      <li><strong>곡률 보정</strong> — 실좌표 3점 외접원으로 <code>R</code>, 도심 편심 <code>e</code>에 대해 <code>V' = V × (1 ± e/R)</code>. 좌표가 합성이면 보정을 비활성화하고 그 사실을 표기</li>
+    </ol>
+<pre><code>function radius3pt(a,b,c){                 // 외접원 반경 — 곡률 보정의 R
+  var A=Math.hypot(b.e-a.e,b.n-a.n),
+      B=Math.hypot(c.e-b.e,c.n-b.n),
+      C=Math.hypot(c.e-a.e,c.n-a.n);
+  var s=(A+B+C)/2,
+      ar=Math.sqrt(Math.max(s*(s-A)*(s-B)*(s-C),0));
+  return ar&lt;1e-9 ? Infinity : (A*B*C)/(4*ar);  // 직선이면 보정계수 1
 }</code></pre>
-    <div class="ac"><div class="h">수용기준</div><ul>
-      <li>곡선 포함 + 좌표 결측 샘플에서 내보내기 버튼 <code>disabled</code>, 사유 3건 이상 표시</li>
-      <li>EPSG:5186 + 실좌표 정상 샘플은 무경고 통과</li>
-      <li>판정 결과가 출력 JSON <code>gates.blocking</code>에 기록</li>
-    </ul></div>
+    <div class="note"><div class="h">복합토량(Composite TIN)은 왜 빠졌나</div><p>앱에 표면(TIN) 데이터 자체가 없다. EG/DG는 측점별 표고값이지 표면이 아니다. 따라서 앱 내부 구현 대상이 아니며, Civil 3D 산출값을 역수입해 대조하는 <strong>F-09 교차검증</strong>으로 대체한다.</p></div>
   </div>
 
   <div class="feat p0">
-    <div class="hd"><span class="fid">F-02</span><h3>체적 산출 3중 엔진과 복합토량 강제</h3><span class="tag t-p0">P0</span></div>
-    <div class="src">§3 — 양단면평균법은 급곡선 · 교차로에서 “수만 ㎥ 단위 오차”를 낳는다</div>
-    <p>세 기법을 모두 계산해 <strong>나란히 비교 표시</strong>한다.</p>
-    <ul>
-      <li>양단면평균법 <code>V = (A1+A2)/2 × L</code></li>
-      <li>정밀법 <code>V = L/6 × (A1 + 4·Am + A2)</code></li>
-      <li>복합토량 <code>V = Σ(삼각형 면적 × 평균 절·성 깊이)</code></li>
-    </ul>
-    <p><strong>곡선부 편심 보정</strong>(Pappus 정리) — 반경 R 구간에서 단면 도심이 곡률 중심 반대쪽으로 e만큼 치우치면 <code>V' = V × (1 + e/R)</code>, 곡률 중심 쪽이면 <code>1 − e/R</code>. 편측 확폭 · 편경사 구간에서 필수.</p>
-    <p><strong>불일치 경보</strong> — AEA와 Composite TIN 차이가 3% 초과 시 황색, 7% 초과 시 적색 + 해당 구간 하이라이트. <strong>하류 전달값은 Composite TIN만 허용</strong>하며 AEA 선택 시 차단(<code>G-02-METHOD</code>).</p>
-    <div class="note warn"><div class="h">계산상 주의</div><p>영단면 교차 삼각형(절·성 혼재)은 반드시 교선으로 세분해야 한다. 단순 평균 깊이를 쓰면 절토와 성토가 서로 상쇄되어 물량이 과소 산출된다.</p></div>
-    <div class="ac"><div class="h">수용기준</div><ul>
-      <li>직선 구간 샘플에서 3기법 편차 &lt; 1%</li>
-      <li>R=60 m 급곡선 + 편측 확폭 샘플에서 차이가 정량 표기되고 적색 경보 발생</li>
-      <li>곡률 보정 on/off 결과가 각각 표기</li>
-    </ul></div>
-  </div>
-
-  <div class="feat p0">
-    <div class="hd"><span class="fid">F-03</span><h3>코리더 타겟 · 리빌드 신선도 검사</h3><span class="tag t-p0">P0</span></div>
-    <div class="src">§4 — “코리더 타겟 단절 및 형상 자동 업데이트 누락”</div>
-    <ul>
-      <li><code>alignment.geometry_hash</code>와 <code>corridor.last_rebuild</code> 비교 — 선형 변경 후 리빌드가 없으면 <strong>STALE 판정 · 차단</strong></li>
-      <li><code>auto_rebuild === false</code>이면 황색 경고: “성능 목적 자동 재구성 해제 상태에서 성과품 추출 시도”</li>
-      <li>측점별 <code>target_status.broken</code> 또는 <code>daylight: none</code> 구간을 목록화하고 캔버스에 적색 마커</li>
-      <li>사면이 지정 최대 연장 내에 원지반과 만나지 못한 측점은 <strong>옹벽 검토 후보</strong>로 분류해 하류 전달</li>
-    </ul>
-    <div class="ac"><div class="h">수용기준</div><ul><li>리빌드 시각이 선형 변경 시각보다 앞선 샘플에서 내보내기 차단 + “코리더 재구성 필요” 표기</li></ul></div>
+    <div class="hd"><span class="fid">F-03</span><h3>물량 정확도 3종 교정</h3><span class="tag t-p0">P0</span></div>
+    <div class="src">D-01 · D-02 · D-03</div>
+    <p>포장 두께 반영, 유토곡선 상태 통일, 핸드오프 전 측점 수록. 세 건 모두 함수 국소 수정이다.</p>
   </div>
 
   <div class="feat p1">
-    <div class="hd"><span class="fid">F-04</span><h3>토량변화율 지층별 매핑 + 누가토량곡선</h3><span class="tag t-p1">P1</span></div>
-    <div class="src">§3 — “토량 변화율의 동적 반영 부재도 치명적인 시공성 문제”</div>
+    <div class="hd"><span class="fid">F-04</span><h3>토량변화율 레지스트리</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">D-05 · 연구자료 §3</div>
+<pre><code>var SWELL_REGISTRY = {
+  soil:    { L:1.25, C:0.88, source:'—', ref_doc:'프로젝트 토질조사 보고서' },
+  ripping: { L:1.35, C:1.02, source:'—', ref_doc:'프로젝트 토질조사 보고서' },
+  blast:   { L:1.55, C:1.18, source:'—', ref_doc:'프로젝트 토질조사 보고서' }
+};</code></pre>
+    <div class="note warn"><div class="h">필수 고지</div><p>기본값은 <strong>착수용 참고치</strong>다. <code>source</code>가 비어 있으면 산출물에 “기본계수 사용” 배지를 강제 부착하고, 근거 게이트에 <strong>R05(토량변화율 출처 존재)</strong>를 추가해 미입력 상태를 가시화한다.</p></div>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">F-05</span><h3>구조물 접속부 토공과 타겟 스위칭</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">D-06 · 연구자료 §5.2</div>
+    <p>트랜지션 구간(<code>stype='X'</code>)을 신설해 접속부 토공을 산출하고, 동일한 구간 정의를 <code>genCorridorScript()</code>에 주입해 사면 타겟을 원지반 표면에서 교대 벽면·갱구부 형상선으로 전환하는 코드를 자동 생성한다.</p>
+  </div>
+
+  <div class="feat p1">
+    <div class="hd"><span class="fid">F-06</span><h3>게이트에 차단력 부여 — R05~R08 신설</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">현행 <code>runLawGate()</code>는 판정만 하고 흐름을 막지 않는다</div>
     <div class="tbl"><table>
-      <thead><tr><th>토질 구분</th><th>L 팽창률</th><th>C 다짐률</th><th>비고</th></tr></thead>
+      <thead><tr><th>규칙</th><th>검사</th><th>차단 여부</th></tr></thead>
       <tbody>
-        <tr><td>토사 (Common soil)</td><td class="num">1.20 – 1.30</td><td class="num">0.87 – 0.90</td><td>함수비 영향 큼</td></tr>
-        <tr><td>리핑암 (Ripping rock)</td><td class="num">1.30 – 1.40</td><td class="num">1.00 – 1.05</td><td>—</td></tr>
-        <tr><td>발파암 (Blasting rock)</td><td class="num">1.50 – 1.60</td><td class="num">1.15 – 1.20</td><td>유용 시 입도 관리</td></tr>
-        <tr><td>폐석회 등 특수토</td><td class="num">프로젝트 정의</td><td class="num">프로젝트 정의</td><td>건조시간 별도 (F-11)</td></tr>
+        <tr><td class="id">R05</td><td>토량변화율 출처 존재</td><td><span class="tag t-p1">경고</span></td></tr>
+        <tr><td class="id">R06</td><td>체적 산출 기법 근거 (AEA면 발주자 인정 기록)</td><td><span class="tag t-p0">차단</span></td></tr>
+        <tr><td class="id">R07</td><td>좌표 실좌표 여부</td><td><span class="tag t-p0">좌표 산출물만 차단</span></td></tr>
+        <tr><td class="id">R08</td><td>계획고 정의(포장상면/노상면) 선택 완료</td><td><span class="tag t-p0">차단</span></td></tr>
       </tbody>
     </table></div>
-    <div class="note warn"><div class="h">필수 고지</div><p>위 값은 <strong>설계 착수용 기본값</strong>이다. 반드시 프로젝트 토질조사 보고서 값으로 대체하도록 UI에 고지하고, 미대체 시 산출 결과에 “기본계수 사용” 배지를 부착한다.</p></div>
-    <p><strong>계산 규칙</strong>은 자연상태(Bank) 기준으로 통일한다. 성토 소요 자연토량 <code>V_bank = V_compacted / C</code>, 운반 토량 <code>V_loose = V_bank × L</code>.</p>
-    <p><strong>누가토량곡선</strong>을 신설해 x축 측점 · y축 누가 토량으로 유용 구간, 토취장, 사토장을 색으로 구분하고 평균 운반거리와 무상 운반거리 초과분을 산출한다.</p>
-    <div class="ac"><div class="h">수용기준</div><ul><li>발파암 40% 포함 샘플에서 순수 기하 체적 대비 사토량 차이가 정량 표기되고 사토장 소요 용량이 ㎥로 제시</li></ul></div>
+    <p><code>showStep(7)</code> 부수효과를 제거하고 화면 이동은 호출자가 결정하도록 바꾼다.</p>
   </div>
 
   <div class="feat p1">
-    <div class="hd"><span class="fid">F-05</span><h3>구조물 구간 코리더 타겟 자동 스위칭</h3><span class="tag t-p1">P1</span></div>
-    <div class="src">§5.2 — 히든 팁: 토공에서 교량 · 터널로 진입하는 트랜지션 자동화</div>
-    <p><code>stype</code>이 B(교량) · T(터널)인 구간과 전후 트랜지션(기본 20 m, 조정 가능)을 자동 검출하고, 사면 타겟을 원지반 표면에서 <strong>교대 벽면 · 갱구부 형상선</strong>으로 전환하는 Dynamo 스크립트를 생성한다.</p>
-<pre><code># Corridor Target Switching @ Structure Zones (Node 06 auto-generated)
-for rng in STRUCTURE_RANGES:
-    region = corridor.GetBaselineRegionByStation(rng["sta_in"], rng["sta_out"])
-    for sub in region.AppliedAssemblySubassemblies:
-        if sub.Name in DAYLIGHT_SUBS:
-            sub.SetTargetSurface(None)                       # 원지반 타겟 해제
-            sub.SetTargetFeatureLine(rng["feature_line_id"])  # 구조물 벽면으로 전환
-corridor.Rebuild()</code></pre>
-    <div class="ac"><div class="h">수용기준</div><ul><li>B/T 구간 3개 샘플에서 구간 범위와 전환 대상이 정확히 나열된 스크립트가 다운로드</li></ul></div>
-  </div>
-
-  <div class="feat p1">
-    <div class="hd"><span class="fid">F-06</span><h3>검증 게이트 엔진</h3><span class="tag t-p1">P1</span></div>
-    <div class="src">§1 — “설계 기준 위반을 감지하는 논리적 게이트(Rule-based Gate)”</div>
-    <p>규칙을 선언형 배열로 분리하고(기존 <code>REGULATIONS</code> 패턴 확장) 각 규칙에 <code>severity</code>와 <code>blocking</code>을 부여한다. 게이트 대시보드는 통과·차단 요약과 각 항목의 근거 기준 · 현재값 · 요구값 · 조치 권고를 보여준다.</p>
-    <div class="tbl"><table>
-      <thead><tr><th>규칙 ID</th><th>검사 항목</th><th>기본 임계값</th><th>심각도</th></tr></thead>
-      <tbody>
-        <tr><td class="id">G-01-CRS</td><td>좌표계 · 합성좌표</td><td>EPSG 명시 + 합성 아님</td><td><span class="tag t-p0">P0</span></td></tr>
-        <tr><td class="id">G-02-METHOD</td><td>체적 산출 기법</td><td>Composite TIN</td><td><span class="tag t-p0">P0</span></td></tr>
-        <tr><td class="id">G-03-STALE</td><td>코리더 리빌드 신선도</td><td>선형 변경 이후 리빌드</td><td><span class="tag t-p0">P0</span></td></tr>
-        <tr><td class="id">G-04-XSLOPE</td><td>표준 횡단경사</td><td class="num">2.0% (1.5–2.5%)</td><td><span class="tag t-p1">P1</span></td></tr>
-        <tr><td class="id">G-05-SLOPE-CUT</td><td>절토 사면 구배</td><td class="num">토사 1:1.2 · 리핑암 1:0.7 · 발파암 1:0.5</td><td><span class="tag t-p1">P1</span></td></tr>
-        <tr><td class="id">G-06-SLOPE-FILL</td><td>성토 사면 구배</td><td class="num">1:1.5 이내</td><td><span class="tag t-p1">P1</span></td></tr>
-        <tr><td class="id">G-07-BERM</td><td>소단 설치</td><td class="num">사면고 5 m 초과 시 폭 1.0 m 이상</td><td><span class="tag t-p1">P1</span></td></tr>
-        <tr><td class="id">G-08-WIDTH</td><td>차로폭 연속성</td><td class="num">급변 &gt; 0.5 m/20 m 없음</td><td><span class="tag t-p1">P1</span></td></tr>
-        <tr><td class="id">G-09-SUPER</td><td>편경사 접속</td><td>최대 편경사 · 변화율 준수</td><td><span class="tag t-p1">P1</span></td></tr>
-        <tr><td class="id">G-10-INTERVAL</td><td>측점 간격</td><td class="num">직선 20 m / 곡선 10 m</td><td><span class="tag t-p2">P2</span></td></tr>
-        <tr><td class="id">G-11-LOD</td><td>정보 수준</td><td>프로젝트 LOD 요구 충족</td><td><span class="tag t-p2">P2</span></td></tr>
-        <tr><td class="id">G-12-ENC</td><td>인코딩 · 경로</td><td>UTF-8, 공백 · 한글 안전</td><td><span class="tag t-p1">P1</span></td></tr>
-      </tbody>
-    </table></div>
-    <div class="note"><div class="h">기준값 확정 절차</div><p>임계값은 <strong>국가건설기준(KDS)과 도로설계편람의 프로젝트 적용값으로 반드시 검증 후 확정</strong>해야 한다. 앱은 각 값의 출처 필드(<code>source</code>)를 함께 표기한다.</p></div>
-    <div class="ac"><div class="h">수용기준</div><ul><li>P0 위반 1건이면 모든 하류 내보내기 UI 비활성, P1만 위반이면 사유 기록 후 진행 허용</li></ul></div>
-  </div>
-
-  <div class="feat p1">
-    <div class="hd"><span class="fid">F-07</span><h3>견고성 — 인코딩 · 경로 · 브리지 프로토콜</h3><span class="tag t-p1">P1</span></div>
-    <div class="src">§4 — “인코딩 파손 및 네트워크 프로토콜 위반”</div>
-    <ul>
-      <li><strong>인코딩</strong> — 생성 스크립트 전량 UTF-8. Python <code># -*- coding: utf-8 -*-</code>, BAT <code>chcp 65001 &gt; nul</code>, 저널과 LISP는 비ASCII를 유니코드 이스케이프로 치환하는 <code>toUnicodeEscape()</code> 유틸 신설</li>
-      <li><strong>경로</strong> — 전 경로 큰따옴표 인용, 역슬래시 정규화, 공백·한글 포함 시 프리플라이트 경고</li>
-      <li><strong>브리지</strong> — 지수 백오프 재시도(0.5 → 1 → 2 → 4초, 최대 5회) + 헬스체크 선행 호출로 콜드스타트 대응, 실패 시 수동 실행 폴백 안내</li>
-    </ul>
-<pre><code>async function bridgeFetch(url,opt={},max=5){
-  for(let i=0;i&lt;max;i++){
-    try{ const r=await fetch(url,{...opt,cache:"no-store"}); if(r.ok) return r; }
-    catch(e){ /* connection refused → 재시도 */ }
-    await new Promise(s=&gt;setTimeout(s,500*2**i));
-  }
-  throw new Error("로컬 브리지 연결 실패 — 생성된 스크립트를 수동 실행하세요.");
-}</code></pre>
-    <div class="ac"><div class="h">수용기준</div><ul><li>서버 미기동 상태에서 앱이 멈추지 않고 5회 재시도 후 수동 실행 안내로 전환</li></ul></div>
+    <div class="hd"><span class="fid">F-07</span><h3>견고성 — 단가 · 타임스탬프 · 브리지</h3><span class="tag t-p1">P1</span></div>
+    <div class="src">D-07 · 연구자료 §4</div>
+    <p><code>COST_REGISTRY</code> 분리(기준연도 필수), <code>tsStamp()</code> 도입. 생성 스크립트의 UTF-8 선언은 이미 있으므로, 남은 것은 경로 인용과 <code>chcp 65001</code> BAT 래퍼, 로컬 브리지 지수 백오프 재시도다.</p>
   </div>
 
   <div class="feat p2">
-    <div class="hd"><span class="fid">F-08</span><h3>Revit Toposolid 서브디비전 템플릿</h3><span class="tag t-p2">P2</span></div>
-    <div class="src">§5.1 — <code>Toposolid.CreateSubDivision()</code> 기반 지형 논리 분할</div>
-    <p>코리더 링크 · 형상선 외곽선을 JSON으로 내보내고, Revit에서 포장(Asphalt) · 길어깨(Shoulder) · 식수대(Planting)를 분할해 재질 파라미터를 자동 부여하는 템플릿(<code>revit_toposolid</code>)을 추가한다. 연구자료 스니펫에 <strong>트랜잭션 예외 처리 · 경계 CurveLoop 유효성(자기교차 · 미폐합) 사전 검사 · 실패 측점 로그</strong>를 보강한다.</p>
+    <div class="hd"><span class="fid">F-08</span><h3>LandXML 곡선 · 횡단 보강</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">D-08 · BIM 시행지침 발주자편 3.6.3</div>
+    <p>실좌표와 <code>R</code> 판정으로 <code>&lt;Curve&gt;</code> 요소를 생성하고 <code>&lt;CrossSects&gt;</code>에 측점별 단면 좌표열을 수록한다. 시행지침이 LandXML을 IFC 대체 제출 포맷으로 인정하므로 제출 성과품 품질에 직결된다.</p>
   </div>
 
   <div class="feat p2">
-    <div class="hd"><span class="fid">F-09</span><h3>IFC 4.3 · LandXML 내보내기와 가상 분할</h3><span class="tag t-p2">P2</span></div>
-    <div class="src">§2.3 MINnD · §2.8 싱가포르 디지털 트윈</div>
-    <ul>
-      <li><strong>LandXML</strong> — 선형 · 횡단면(CrossSects) · 표면 표준 내보내기</li>
-      <li><strong>가상 분할</strong> — 코리더 솔리드를 측점 구간별로 분할하고 4D(공정 ID, 착수·완료일) · 5D(단가 코드, 물량) 속성을 주입하는 Dynamo 스크립트 생성</li>
-      <li><strong>IFC 4.3 매핑</strong> — <code>IfcAlignment</code> · <code>IfcCourse</code> · <code>IfcEarthworksCut</code> · <code>IfcEarthworksFill</code> 매핑 정의를 앱 내 문서 탭으로 제공</li>
-    </ul>
+    <div class="hd"><span class="fid">F-09</span><h3>Civil 3D 복합토량 역수입 교차검증</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">연구자료 §2.2 평행 모델링(독일 실무)</div>
+    <p>Civil 3D에서 산출한 복합토량 CSV를 앱에 다시 읽혀 구간별로 대조하고 <strong>편차 ±2% 초과 구간을 목록화</strong>한다. 앱이 갖지 못한 TIN 정확도를 외부에서 빌려 검증하는 방식이다.</p>
   </div>
 
   <div class="feat p2">
-    <div class="hd"><span class="fid">F-10</span><h3>하류 핸드오프 계약</h3><span class="tag t-p2">P2</span></div>
-    <div class="src">§2.1 InfoDrainage 통합 · §1 하류의 절대 기준값</div>
-    <div class="tbl"><table>
-      <thead><tr><th>하류 노드</th><th>전달 항목</th></tr></thead>
-      <tbody>
-        <tr><td class="w">배수 (InfoDrainage 등)</td><td>계획고, 횡단경사, 측구 위치·형식, 유역 경계 후보(사면 최외곽선), 불투수 면적</td></tr>
-        <tr><td class="w">포장</td><td>차로폭, 편경사, 포장층 두께 구성, 노상 표고</td></tr>
-        <tr><td class="w">구조 (Revit)</td><td>교대·교각 실좌표(N/E), 계획고, 사면 접속부 형상선, <code>stype</code> 구간표</td></tr>
-        <tr><td class="w">공정 · 공사비</td><td>측점별 절·성 물량(자연 · 다짐 · 흐트러진 상태 3종), 지층별 분리 물량</td></tr>
-      </tbody>
-    </table></div>
-  </div>
-
-  <div class="feat p2">
-    <div class="hd"><span class="fid">F-11</span><h3>드론 포인트클라우드 EG 체적 변화 추적</h3><span class="tag t-p2">P2</span></div>
-    <div class="src">§2.6 — 한국 폐석회 매립지 사례</div>
-    <p>주기적 드론 측량으로 갱신되는 EG 표면을 다중 버전으로 보관하고 DG 대비 기간별 체적 변화를 추적한다. 특수토는 함수비 건조 소요 시간을 입력받아 반출 가능 시점과 운반 계획에 반영하는 보조 계산기를 제공한다.</p>
-  </div>
-
-  <div class="feat p2">
-    <div class="hd"><span class="fid">F-12</span><h3>MCP 호환 컨텍스트 · LOD 성능 제어</h3><span class="tag t-p2">P2</span></div>
-    <div class="src">§1 MCP · §5.3 MMS 최적화 · §6 SSOT</div>
-    <ul>
-      <li><strong>MCP 컨텍스트 노출</strong> — 검증 결과 · 물량 · 게이트 상태를 기계 판독 가능한 단일 JSON으로 항상 최신화. 향후 AI 도구가 질의할 단일 진실 공급원 역할</li>
-      <li><strong>표면 LOD 제어</strong> — 작업 중에는 <code>draft</code>(뷰포트 최소 해상도, 국소 Bounding Box 갱신), LandXML·IFC 내보내기 직전에만 <code>high</code>로 자동 승격 후 원복</li>
-    </ul>
+    <div class="hd"><span class="fid">F-10</span><h3>Revit Toposolid 서브디비전 스크립트</h3><span class="tag t-p2">P2</span></div>
+    <div class="src">연구자료 §5.1</div>
+    <p>스크립트 탭에 5번째 항목을 추가해 포장·길어깨·식수대 경계를 <code>Toposolid.CreateSubDivision()</code>으로 분할한다. 경계 CurveLoop 유효성 검사와 실패 측점 로그를 포함한다.</p>
   </div>
 </section>
 
 <section id="s5">
-  <h2><span class="sn">05</span>화면 재설계</h2>
-  <p class="sub">기존 단일 흐름을 입력 → 검증 → 산출 → 내보내기 4구역으로 재편한다.</p>
-  <div class="steps">
-    <div class="step new"><div class="no">STEP 0 · 신규</div><div class="nm">프로젝트 · 좌표계</div><div class="ds">EPSG 선택, 합성좌표 판정 배너, 상류 JSON 로드</div></div>
-    <div class="step"><div class="no">STEP 1 · 개선</div><div class="nm">표준횡단 정의</div><div class="ds">Assembly 파라미터, 단면 미리보기</div></div>
-    <div class="step"><div class="no">STEP 2 · 개선</div><div class="nm">측점 테이블</div><div class="ds">stype · 실좌표 · 비고 태그, 위반 행 하이라이트</div></div>
-    <div class="step"><div class="no">STEP 3 · 개선</div><div class="nm">횡단 검토 캔버스</div><div class="ds">단면 뷰 + 절·성 면적, 사면 미도달 표시</div></div>
-    <div class="step new"><div class="no">STEP 4 · 신규</div><div class="nm">체적 산출</div><div class="ds">3기법 비교표, 곡률보정 토글, 불일치 경보</div></div>
-    <div class="step new"><div class="no">STEP 5 · 신규</div><div class="nm">토량 배분</div><div class="ds">L/C 계수 편집, 누가토량곡선, 사토·토취 요약</div></div>
-    <div class="step new"><div class="no">STEP 6 · 신규</div><div class="nm">게이트 대시보드</div><div class="ds">P0/P1/P2 위반 목록, 차단 상태, 조치 권고</div></div>
-    <div class="step"><div class="no">STEP 7 · 개선</div><div class="nm">스크립트 생성</div><div class="ds">플랫폼 8종 + 구조물 타겟 스위칭 옵션</div></div>
-    <div class="step new"><div class="no">STEP 8 · 신규</div><div class="nm">내보내기 · 핸드오프</div><div class="ds">JSON v2 / LandXML / IFC 매핑 / 하류 계약 요약</div></div>
-  </div>
-  <p><strong>전역 상태 배지</strong> — 헤더에 <code>CRS ✔ | REBUILD ✔ | VOLUME ✔ | GATE 2 warn</code> 형태로 상시 표시해, 어느 단계에 있든 파이프라인 건강도가 한눈에 읽히게 한다.</p>
+  <h2><span class="sn">05</span>구현 위치 매핑</h2>
+  <p class="sub">실제 함수명 기준. 대부분 국소 수정이며 앱의 기존 구조를 그대로 활용한다.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>기능</th><th>대상 함수</th><th>변경 성격</th></tr></thead>
+    <tbody>
+      <tr><td class="id">F-01</td><td><code>exportLandXML</code> · <code>exportBridgeCoordCSV</code> · <code>genCoordScript</code> · <code>exportAll</code></td><td>선두 가드 삽입</td></tr>
+      <tr><td class="id">F-02</td><td><code>calcVolumes</code> · <code>vol-method</code> 셀렉트</td><td>분기 추가 + <code>radius3pt</code>·<code>curvatureFactor</code> 신설</td></tr>
+      <tr><td class="id">F-03</td><td><code>calcCutArea</code> · <code>calcFillArea</code> · <code>calcAllSections</code> · <code>drawMassHaul</code> · <code>exportHandoff</code></td><td>계산식 교정</td></tr>
+      <tr><td class="id">F-04</td><td><code>getSlopeRatio</code> 인접부 · <code>calcVolumes</code></td><td>신규 상수 + 매핑</td></tr>
+      <tr><td class="id">F-05</td><td><code>calcAllSections</code> · <code>calcVolumes</code> · <code>genCorridorScript</code> · <code>getStructZones</code></td><td>구간 분류 확장</td></tr>
+      <tr><td class="id">F-06</td><td><code>runLawGate</code></td><td>규칙 4종 + <code>blocking</code>, 부수효과 제거</td></tr>
+      <tr><td class="id">F-07</td><td><code>calcVolumes</code> · <code>download</code> · 전 export</td><td>상수 분리 + 유틸 신설</td></tr>
+      <tr><td class="id">F-08</td><td><code>exportLandXML</code></td><td>요소 확장</td></tr>
+      <tr><td class="id">F-09</td><td>신규 <code>importCompositeVolume()</code> + Step 5 카드</td><td>신규</td></tr>
+      <tr><td class="id">F-10</td><td><code>showScriptTab</code> · 신규 <code>genToposolidScript()</code></td><td>탭 추가</td></tr>
+    </tbody>
+  </table></div>
 </section>
 
 <section id="s6">
-  <h2><span class="sn">06</span>스크립트 생성기 확장</h2>
-  <p class="sub">기존 4종에서 8종으로. 공통 헤더에 게이트 통과 여부를 각인한다.</p>
-  <div class="tbl"><table>
-    <thead><tr><th>키</th><th>플랫폼</th><th>언어</th><th>구분</th><th>주 용도</th></tr></thead>
-    <tbody>
-      <tr><td class="id">dynamo</td><td>Dynamo for Civil 3D</td><td>Python</td><td class="w"><span class="tag t-n">개선</span></td><td>코리더 조회 · 리빌드 · 물량 추출</td></tr>
-      <tr><td class="id">civil3d_python</td><td>Civil 3D</td><td>Python</td><td class="w"><span class="tag t-n">개선</span></td><td>복합토량 산출 · 표면 비교</td></tr>
-      <tr><td class="id">civil3d_csharp</td><td>Civil 3D .NET</td><td>C#</td><td class="w"><span class="tag t-n">개선</span></td><td>대량 측점 처리 (.NET 8 대응)</td></tr>
-      <tr><td class="id">revit_csharp</td><td>Revit Add-in</td><td>C#</td><td class="w"><span class="tag t-n">개선</span></td><td>구조물 배치 좌표 검증</td></tr>
-      <tr><td class="id">revit_toposolid</td><td>Revit API</td><td>Python</td><td class="w"><span class="tag t-new">신규</span></td><td>Toposolid 서브디비전 분할</td></tr>
-      <tr><td class="id">corridor_target</td><td>Dynamo</td><td>Python</td><td class="w"><span class="tag t-new">신규</span></td><td>교량·터널 구간 타겟 스위칭</td></tr>
-      <tr><td class="id">landxml_ifc</td><td>내보내기</td><td>XML / IFC</td><td class="w"><span class="tag t-new">신규</span></td><td>LandXML · IFC 4.3 매핑 산출</td></tr>
-      <tr><td class="id">lisp_batch</td><td>AutoCAD LISP + BAT</td><td>LISP / BAT</td><td class="w"><span class="tag t-n">개선</span></td><td>UTF-8 · 경로 인용 · 재시도 내장</td></tr>
-    </tbody>
-  </table></div>
-  <div class="note crit"><div class="h">오용 방지</div><p>모든 템플릿 공통 헤더에 <code>schema_version</code>, 생성 시각, <strong>게이트 통과 여부</strong>를 주석으로 각인한다. 차단 상태에서 생성된 스크립트가 현장에서 정상 성과품으로 오용되는 것을 막기 위해서다.</p></div>
-</section>
-
-<section id="s7">
-  <h2><span class="sn">07</span>검증 · 테스트</h2>
-  <p class="sub">앱 내 <code>QA/SELFTEST</code> 러너가 자동 실행하는 골든 케이스.</p>
+  <h2><span class="sn">06</span>검증 계획</h2>
   <div class="tbl"><table>
     <thead><tr><th>ID</th><th>시나리오</th><th>기대 결과</th></tr></thead>
     <tbody>
-      <tr><td class="id">T-01</td><td>EPSG 미기재 + 곡선 선형</td><td>G-01 차단, 사유 2건 이상</td></tr>
-      <tr><td class="id">T-02</td><td>정상 EPSG:5186 직선 구간</td><td>전 게이트 통과, 3기법 편차 &lt; 1%</td></tr>
-      <tr><td class="id">T-03</td><td>R=60 m 급곡선 + 편측 확폭</td><td>AEA vs Composite TIN 적색 경보</td></tr>
-      <tr><td class="id">T-04</td><td>선형 변경 후 리빌드 누락</td><td>G-03 차단</td></tr>
-      <tr><td class="id">T-05</td><td>발파암 40% 포함</td><td>사토량이 기하 체적 대비 증가 표기</td></tr>
-      <tr><td class="id">T-06</td><td>교량·터널 구간 3개</td><td>타겟 스위칭 스크립트 구간 정확</td></tr>
-      <tr><td class="id">T-07</td><td>한글 + 공백 경로</td><td>경고 후 인용 처리된 스크립트 생성</td></tr>
-      <tr><td class="id">T-08</td><td>브리지 미기동</td><td>5회 재시도 후 수동 실행 안내</td></tr>
+      <tr><td class="id">T-01</td><td>기본 샘플(600 m, 포장 0.45 m)에 F-03 적용</td><td>절토량이 측점당 4.5 ㎡ 상당 증가, 증가율 표기</td></tr>
+      <tr><td class="id">T-02</td><td>성토 우세 노선</td><td>자연상태 유토곡선이 종전 대비 하향, 사토→토취 전환 구간 검출</td></tr>
+      <tr><td class="id">T-03</td><td>합성좌표 상태에서 좌표 산출물 3종</td><td>3종 차단, 물량 CSV는 정상</td></tr>
+      <tr><td class="id">T-04</td><td>실좌표 핸드오프(R=60 m 곡선 포함) 수신</td><td>곡률 보정 활성화, AEA 대비 편차 경보</td></tr>
+      <tr><td class="id">T-05</td><td>AEA 선택 + 발주자 인정 근거 미입력</td><td>R06 FAIL, 내보내기 차단</td></tr>
+      <tr><td class="id">T-06</td><td>교량 200~350 m 구간</td><td>전이구간 토공이 0이 아닌 값, 코리더 스크립트 구간 일치</td></tr>
+      <tr><td class="id">T-07</td><td>같은 세션에서 내보내기 2회</td><td>파일명 타임스탬프가 서로 다름</td></tr>
+      <tr><td class="id">T-08</td><td>Civil 3D 복합토량 CSV 역수입</td><td>편차 ±2% 초과 구간 목록 출력</td></tr>
     </tbody>
   </table></div>
-  <h3>교차 검증 (평행 모델링)</h3>
-  <p>독일 실무의 평행 모델링(§2.2)을 차용해, 동일 구간을 ① 앱 산출값 ② Civil 3D 복합토량 직접 산출값 두 경로로 계산하고 편차 리포트를 생성한다. <strong>편차 ±2% 이내를 검수 통과 기준</strong>으로 제안한다.</p>
 </section>
 
-<section id="s8">
-  <h2><span class="sn">08</span>로드맵</h2>
-  <p class="sub">각 Phase 종료 시 단일 HTML 파일 하나만 교체하면 되도록 배포 단위를 유지한다.</p>
+<section id="s7">
+  <h2><span class="sn">07</span>로드맵</h2>
   <div class="road">
     <div class="phase">
-      <div class="when"><b>Phase 1</b>1–2주차</div>
-      <div class="what"><strong>무결성 게이트</strong> — F-01 좌표계 · F-02 체적 3중 엔진 · F-03 리빌드 신선도 · F-06 게이트 엔진</div>
-      <div class="out">차단형 게이트가 동작하는 앱, 골든 케이스 T-01 ~ T-04 통과</div>
+      <div class="when"><b>Phase 1</b>1주차</div>
+      <div class="what"><strong>물량 신뢰도</strong> — D-01·D-02·D-03 교정(F-03), F-01 좌표 차단</div>
+      <div class="out">물량 오차의 원인 제거. 가장 큰 즉시 효과</div>
     </div>
     <div class="phase">
-      <div class="when"><b>Phase 2</b>3–4주차</div>
-      <div class="what"><strong>물량 신뢰도</strong> — F-04 토량변화율 · F-07 견고성, 화면 Step 4 · 5 · 6 신설</div>
-      <div class="out">누가토량곡선, 지층별 L/C 매핑, 인코딩·경로·재시도 방어</div>
+      <div class="when"><b>Phase 2</b>2주차</div>
+      <div class="what"><strong>근거와 게이트</strong> — F-02 기법 근거, F-04 토량변화율, F-06 게이트 차단력</div>
+      <div class="out">산출 근거의 추적 가능성 확보</div>
     </div>
     <div class="phase">
-      <div class="when"><b>Phase 3</b>5–7주차</div>
-      <div class="what"><strong>자동화 · 상호운용</strong> — F-05 타겟 스위칭 · F-08 Toposolid · F-09 IFC/LandXML · F-10 하류 계약</div>
-      <div class="out">스크립트 8종, 표준 포맷 내보내기, 하류 핸드오프 계약 확정</div>
+      <div class="when"><b>Phase 3</b>3–4주차</div>
+      <div class="what"><strong>범위 확장</strong> — F-05 접속부 토공·타겟 스위칭, F-07 견고성</div>
+      <div class="out">누락 물량 회수, 운영 안정</div>
     </div>
     <div class="phase">
-      <div class="when"><b>Phase 4</b>8주차 ~</div>
-      <div class="what"><strong>고도화</strong> — F-11 드론 EG 추적 · F-12 MCP 컨텍스트와 LOD 제어 · 교차 검증 리포트</div>
-      <div class="out">AI 질의 가능한 단일 컨텍스트, 대형 모델 성능 제어</div>
+      <div class="when"><b>Phase 4</b>5–6주차</div>
+      <div class="what"><strong>상호운용</strong> — F-08 LandXML, F-09 교차검증, F-10 Toposolid</div>
+      <div class="out">제출 성과품 품질과 외부 검증</div>
     </div>
   </div>
 </section>
 
-<section id="s9">
-  <h2><span class="sn">09</span>리스크와 대응</h2>
-  <div class="tbl"><table>
-    <thead><tr><th>리스크</th><th>영향</th><th>대응</th></tr></thead>
-    <tbody>
-      <tr><td>게이트 강제 차단에 대한 현장 반발</td><td class="w">도입 지연</td><td>Phase 1은 “경고 + 사유 기록 후 진행” 모드 병행, 2주 계도 후 차단 전환</td></tr>
-      <tr><td>기준값의 프로젝트별 상이</td><td class="w">오판정</td><td>전 계수 편집 가능 + <code>source</code> 표기 + 기본값 사용 시 배지</td></tr>
-      <tr><td>복합토량 계산의 브라우저 성능 한계</td><td class="w">대형 프로젝트 지연</td><td>측점 청크 처리 + Web Worker 검토, 삼각망 상한 경고</td></tr>
-      <tr><td>단일 파일 비대화 (962행 → 3천행 이상 예상)</td><td class="w">유지보수성 저하</td><td>모듈 배너 구획 엄수, 함수 200행 상한, 상수 테이블 최상단 집약</td></tr>
-      <tr><td>Civil 3D · Revit 버전별 API 차이</td><td class="w">스크립트 실패</td><td>템플릿에 대상 버전 명시 + 실행 전 버전 체크 코드 삽입</td></tr>
-      <tr><td>좌표 판정 휴리스틱의 오탐</td><td class="w">불필요한 차단</td><td>판정 근거를 항상 나열, 관리자 확인 체크박스로 1회 해제(사유 필수 기록)</td></tr>
-    </tbody>
-  </table></div>
-</section>
-
-<section id="s10">
-  <h2><span class="sn">10</span>즉시 착수 3건</h2>
-  <p class="sub">가장 적은 코드로 가장 큰 리스크를 걷어내는 순서.</p>
+<section id="s8">
+  <h2><span class="sn">08</span>우선 착수 3건</h2>
+  <p class="sub">모두 함수 국소 수정이다. 그런데 앱이 내놓는 숫자가 바뀐다.</p>
   <ol>
-    <li><strong>F-01 좌표계 게이트</strong> — 단일 함수 + 배너로 구현 가능. 연구자료가 지목한 최대 리스크를 최소 비용으로 차단한다.</li>
-    <li><strong>F-02 체적 3기법 비교표</strong> — 기존 면적 데이터만으로 즉시 계산 가능. 곡선부 오차를 눈으로 보여주는 설득력이 가장 크다.</li>
-    <li><strong>F-07 인코딩 · 경로 · 재시도</strong> — 순수 방어 코드. 현장 장애 신고의 상당수를 바로 제거한다.</li>
+    <li><strong>D-01 포장 두께 반영</strong> — <code>calcCutArea</code>/<code>calcFillArea</code> 두 함수 수정으로 기본값 기준 약 11% 물량 오차가 사라진다.</li>
+    <li><strong>D-02 유토곡선 상태 통일</strong> — <code>drawMassHaul</code> 한 줄 수식 교정으로 사토·토취 판단이 뒤집힌다.</li>
+    <li><strong>D-03 핸드오프 전 측점 수록</strong> — <code>slice(0,5)</code> 제거. 하류 앱이 비로소 측점별 검증을 할 수 있다.</li>
   </ol>
-  <div class="note"><div class="h">이 계획의 요지</div><p>Phase 1의 네 기능(F-01 · F-02 · F-03 · F-06)만 완료해도 Node 06은 <strong>“검토를 돕는 도구”에서 “잘못된 데이터를 하류로 내보내지 않는 게이트키퍼”로 성격이 바뀐다.</strong> 이후 물량 신뢰도(Phase 2)와 자동화·상호운용(Phase 3)을 얹는 순서를 권장한다.</p></div>
+  <div class="note"><div class="h">이 계획의 요지</div><p>이 앱은 이미 근거 레지스트리·게이트·핸드오프 계약·좌표 출처 추적을 갖춘 상위 수준의 도구다. 남은 문제는 “기능이 없다”가 아니라 <strong>물량 계산의 물리적 정확성과 게이트의 차단력</strong>이다. Phase 1의 네 건만 고치면 앱의 산출물은 지금과 다른 숫자를 내놓게 되며, <strong>그 숫자가 비로소 현장에서 쓸 수 있는 값이 된다.</strong></p></div>
 </section>
 
 <section id="sA">
-  <h2><span class="sn">A</span>부록 — 추적표와 기본 파라미터</h2>
-  <p class="sub">연구자료의 모든 절이 어느 기능으로 흡수되었는지.</p>
+  <h2><span class="sn">A</span>연구자료 추적표</h2>
+  <p class="sub">연구자료의 지적이 실측 앱에서 어떤 상태였고 어떻게 대응하는가.</p>
   <div class="tbl"><table>
-    <thead><tr><th>연구자료</th><th>핵심 내용</th><th>대응 기능</th></tr></thead>
+    <thead><tr><th>연구자료</th><th>지적 사항</th><th>앱 실측</th><th>대응</th></tr></thead>
     <tbody>
-      <tr><td class="id">§1</td><td>매개변수 무결성 · 동적 재구성</td><td>F-06, 설계원칙 3, 스키마 v2</td></tr>
-      <tr><td class="id">§1</td><td>MCP · 수평 선형 회귀(HRA)</td><td>F-12</td></tr>
-      <tr><td class="id">§1</td><td>좌표계 절대 동기화</td><td><strong>F-01</strong></td></tr>
-      <tr><td class="id">§2.1</td><td>미국 — InfoDrainage 수직 통합</td><td>F-10</td></tr>
-      <tr><td class="id">§2.2</td><td>독일 — 평행 모델링 · LOD</td><td>교차 검증, G-11</td></tr>
-      <tr><td class="id">§2.3</td><td>프랑스 — MINnD · 가상 분할</td><td>F-09</td></tr>
-      <tr><td class="id">§2.4</td><td>중국 — AHP · 3D-RRT*</td><td>상류 노드 영역 (참고)</td></tr>
-      <tr><td class="id">§2.5</td><td>러시아 — 다중 모델 지질</td><td>F-04 지층 매핑</td></tr>
-      <tr><td class="id">§2.6</td><td>한국 — 드론 · 폐석회</td><td>F-11</td></tr>
-      <tr><td class="id">§2.7</td><td>일본 — TCS-Net 역설계</td><td>F-11 확장 과제</td></tr>
-      <tr><td class="id">§2.8</td><td>싱가포르 — VDC · 간섭 검토</td><td>F-09, F-10</td></tr>
-      <tr><td class="id">§3</td><td>체적 산출 기법 비교</td><td><strong>F-02</strong></td></tr>
-      <tr><td class="id">§3</td><td>토량변화율</td><td><strong>F-04</strong></td></tr>
-      <tr><td class="id">§4</td><td>좌표 합성</td><td><strong>F-01</strong></td></tr>
-      <tr><td class="id">§4</td><td>코리더 타겟 단절</td><td><strong>F-03</strong></td></tr>
-      <tr><td class="id">§4</td><td>인코딩 · 포트</td><td><strong>F-07</strong></td></tr>
-      <tr><td class="id">§5.1</td><td>Toposolid 서브디비전</td><td>F-08</td></tr>
-      <tr><td class="id">§5.2</td><td>구조물 타겟 스위칭</td><td><strong>F-05</strong></td></tr>
-      <tr><td class="id">§5.3</td><td>MMS · LOD 최적화</td><td>F-12</td></tr>
-      <tr><td class="id">§6</td><td>SSOT · AI 수용</td><td>스키마 v2, F-12</td></tr>
+      <tr><td class="id">§4</td><td>좌표 합성 — 파이프라인 차단</td><td>표기까지만 구현</td><td><strong>F-01</strong> (D-04)</td></tr>
+      <tr><td class="id">§3</td><td>양단면평균법 급곡선 왜곡</td><td>2기법 구현, 곡률 보정 없음</td><td><strong>F-02</strong> — 차단 아님(§02)</td></tr>
+      <tr><td class="id">§3</td><td>토량변화율 지층별 반영</td><td>전역 1개, 공사비에만</td><td><strong>F-04</strong> (D-05)</td></tr>
+      <tr><td class="id">§3</td><td>복합토량 TIN 적분</td><td>표면 데이터 자체가 없음</td><td><strong>F-09</strong> 역수입 교차검증으로 대체</td></tr>
+      <tr><td class="id">§4</td><td>코리더 타겟 리빌드 신선도</td><td>앱이 코리더를 소유하지 않음</td><td>스크립트 측 검사로 이관 (F-05)</td></tr>
+      <tr><td class="id">§4</td><td>인코딩 · 경로 · 재시도</td><td>UTF-8 선언은 있음</td><td><strong>F-07</strong> 잔여분</td></tr>
+      <tr><td class="id">§5.1</td><td>Toposolid 지형 논리 분할</td><td>없음</td><td><strong>F-10</strong></td></tr>
+      <tr><td class="id">§5.2</td><td>구조물 구간 타겟 스위칭</td><td>구간 인지만 있음</td><td><strong>F-05</strong> (D-06)</td></tr>
+      <tr><td class="id">§5.3</td><td>MMS · LOD 성능 제어</td><td>LOD 선택 UI만 존재</td><td>스크립트 옵션으로 이관</td></tr>
+      <tr><td class="id">§6</td><td>SSOT 표준 스키마 유동</td><td>계약 v2 완비, 그러나 5측점만 전송</td><td><strong>F-03</strong> (D-03)</td></tr>
+      <tr><td class="id">§2.2</td><td>평행 모델링 교차 검증</td><td>없음</td><td><strong>F-09</strong></td></tr>
     </tbody>
   </table></div>
-
-  <h3>기본 파라미터 초기값</h3>
-<pre><code>const PARAMS = {
-  schema_version: "2.0",
-  crs: { allowed:[5186,5185,5187,5188,5179], default:5186, source:"project" },
-  section: { xslope_default:0.02, xslope_range:[0.015,0.025],
-             lane_width_default:3.5, interval_line:20, interval_curve:10 },
-  slope: { cut:{ "토사":1.2, "리핑암":0.7, "발파암":0.5 },
-           fill:{ default:1.5 },
-           berm:{ trigger_height:5.0, min_width:1.0 } },
-  swell: { "토사":{L:1.25,C:0.88}, "리핑암":{L:1.35,C:1.02},
-           "발파암":{L:1.55,C:1.18} },   // ※ 프로젝트 토질조사값으로 대체 필수
-  volume: { method:"composite_tin", curvature_correction:true,
-            warn_deviation:0.03, error_deviation:0.07 },
-  bridge: { retries:5, backoff_ms:500, health_path:"/health" },
-  gate: { enforce_p0:true, allow_override_with_reason:true }
-};</code></pre>
 </section>
 
 <footer>
-  <p>이 계획서는 연구자료 「차세대 인프라 BIM: 표준횡단 및 횡단토공 데이터 파이프라인의 글로벌 실무 혁신과 고도화 가이드」와 저장소 내 동일 계열 앱 <code>BIM_Slope_EL_Automation.html</code>의 구조 분석을 근거로 작성되었다. 원본 <code>06_표준횡단_횡단토공</code> 앱 소스는 로컬 경로에 있어 직접 열람하지 않았으므로, 실제 소스 확인 후 함수 배치만 재매핑하면 된다. 사면 구배 · 횡단경사 · 토량변화율의 기본값은 착수용 참고치이며 프로젝트 기준(KDS · 도로설계편람 · 토질조사 보고서)으로 확정해야 한다.</p>
+  <p>이 계획서 v2.0은 연구자료와 <strong>앱 소스 3,305행 전수 분석</strong>을 근거로 작성되었다. 결함 8건은 모두 소스의 특정 함수에서 확인한 것이며, 수치는 앱의 기본 입력값(포장 0.45 m · 반폭 5.0 m · 절토고 3 m · 토사 C=0.88)으로 산정했다. 토량변화율·단가의 기본값은 착수용 참고치이며 프로젝트 토질조사 보고서와 표준품셈으로 확정해야 한다. 계획고 정의(포장상면/노상면)는 프로젝트 BEP에서 먼저 합의할 사항이다.</p>
 </footer>
 
 </main>

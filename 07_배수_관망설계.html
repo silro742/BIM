@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>07 배수와 관망설계 v2.3.0</title>
+<title>07 배수와 관망설계 v2.3.1</title>
 <style>
 /* v2.1.1 가독성 개선: 모든 크기를 rem 기반으로 전환 → --fs 하나로 일괄 확대/축소 */
 html{font-size:16px;}
@@ -121,7 +121,7 @@ td select{cursor:pointer;}
 </head>
 <body>
 <div id="hdr">
-  <h1>&#x1F4A7; 배수와 관망 설계 자동화</h1><span class="bdg">v2.3.0 연구적용 업그레이드판</span>
+  <h1>&#x1F4A7; 배수와 관망 설계 자동화</h1><span class="bdg">v2.3.1 연구적용 업그레이드판</span>
   <span class="sub">Civil 3D 2027 KR &middot; Revit 2027 KR &middot; QGIS 4.0 &middot; Dynamo PythonNet3</span>
   <div class="sp"></div>
   <span class="ebdg">QGIS4.0&#x2192;C3D2027&#x2192;Revit2027</span>
@@ -451,6 +451,19 @@ td select{cursor:pointer;}
 </div>
 <!-- TAB9: BIM 산출물 -->
 <div class="panel" id="p-exp">
+  <div class="card"><h3>&#x1F4C1; 출력 폴더 <span class="tnew">v2.3.1</span></h3>
+    <div id="outdir-info"></div>
+    <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn" onclick="pickOutDir()">&#x1F4C2; 출력 폴더 지정</button>
+      <button class="btn sec" onclick="clearOutDir()">해제 (다운로드 폴더 사용)</button>
+      <label style="display:flex;align-items:center;gap:0.35rem;margin:0;font-weight:400;color:var(--txt);">
+        <input type="checkbox" id="outdir-stamp" style="width:auto;"> 파일명에 기하 리비전·시각 붙이기
+      </label>
+    </div>
+    <div class="v13-fh" data-fieldhint="outdir"><b>사용법</b>: [출력 폴더 지정] → 바탕화면의 <code>토성</code> 폴더 선택 → 이후 모든 저장이 대화상자 없이 그 폴더로 들어갑니다. 새로고침 후에는 첫 저장 때 권한을 한 번만 다시 확인합니다.<br>
+      <b>한계(중요)</b>: 브라우저 보안 모델상 웹 페이지는 <code>C:\Users\silro\Desktop\토성</code> 같은 <b>절대 경로를 지정해 쓸 수 없습니다</b> — 경로를 앱에 박아 넣는 방법은 존재하지 않으며, 폴더는 사용자가 직접 골라야 합니다. 또한 브라우저는 고른 폴더의 전체 경로를 앱에 알려주지 않으므로 화면에는 <b>폴더 이름만</b> 표시됩니다. Chrome·Edge 에서만 동작하며, 그 밖의 브라우저에서는 기본 다운로드 폴더로 저장됩니다.</div>
+    <div id="outdir-batch"></div>
+  </div>
   <div class="card"><h3>&#x1F4E6; BIM 산출물 내보내기</h3>
     <div style="display:flex;flex-wrap:wrap;gap:7px;">
       <button class="btn" onclick="expJSON()">&#x1F4BE; Handoff JSON</button>
@@ -461,6 +474,7 @@ td select{cursor:pointer;}
       <button class="btn sec" onclick="expConstruct()">&#x1F6A7; 시공성 검토 리포트</button>
       <button class="btn ok2" onclick="saveRpt()">&#x1F4CB; 자가 보고 (app_report/v1)</button>
       <button class="btn sec" onclick="dlPreview()">&#x2B07; 미리보기 파일 저장</button>
+      <button class="btn ok2" onclick="expAll()">&#x1F4E5; 전 형식 일괄 저장 (7종)</button>
     </div>
     <div class="row" style="margin-top:8px;">
       <div class="col" style="min-width:16rem;"><label>IFC 스키마 <span class="tnew">P3-2</span></label>
@@ -708,11 +722,11 @@ td select{cursor:pointer;}
     <button class="qb" onclick="aq('SUDS 저류 설계 개략 검토 방법')">SUDS</button>
     <button class="qb" onclick="checkLawUpdates()">&#x2714; 근거 업데이트</button>
   </div>
-  <div id="ai-msgs"><div class="amsg a">배수 관망 설계 AI 검토 패널 v2.3.0 (연구적용 업그레이드판). 근거 표기는 검증/미검증을 구분합니다. Claude 또는 Gemini 선택 가능 — API 키는 브라우저 세션에만 보관되며 서버로 전송되지 않습니다.</div></div>
+  <div id="ai-msgs"><div class="amsg a">배수 관망 설계 AI 검토 패널 v2.3.1 (연구적용 업그레이드판). 근거 표기는 검증/미검증을 구분합니다. Claude 또는 Gemini 선택 가능 — API 키는 브라우저 세션에만 보관되며 서버로 전송되지 않습니다.</div></div>
   <div id="ai-iw"><textarea id="ai-inp" placeholder="설계 검토 질문..."></textarea><button id="ai-send" onclick="sendAi()">&#x25B6;</button></div>
 </div>
 </div><!-- /layout -->
-<div id="lb"><span style="color:var(--acc2);font-size:0.78rem;">&#x25CF;</span>&nbsp;<span id="lt">drain_network_design_tool v2.3.0 (연구적용 업그레이드판) — EPSG:5186</span></div>
+<div id="lb"><span style="color:var(--acc2);font-size:0.78rem;">&#x25CF;</span>&nbsp;<span id="lt">drain_network_design_tool v2.3.1 (연구적용 업그레이드판) — EPSG:5186</span></div>
 
 <script>
 /* ============================================================
@@ -722,7 +736,7 @@ td select{cursor:pointer;}
    P3-1 DEM 임포트 · P3-2 IFC Pset/폴백 · P3-3 물량 · P3-4 Dynamo 2종
    v2.0.0 대비 수정 이력은 [감사] 탭 및 AUDIT_* 배열 참조
    ============================================================ */
-var APP_VERSION='2.3.0';
+var APP_VERSION='2.3.1';
 var EPSG_ALLOWED=[5179,5185,5186,5187,5188]; /* EPSG-MB v1 — 허용 국가 좌표계 5종 */
 var EPSG_BELTS={ /* name/lon0/k/fe/fn — QGIS projinfo EPSG 정본 (2026-08-08 실측 일치) */
   5179:{name:'UTM-K 단일원점',lon0:127.5,k:0.9996,fe:1000000,fn:2000000},
@@ -2589,13 +2603,158 @@ function checkLawUpdates(){aq('다음 근거의 최신 개정 현황을 확인�
 
 /* ---------- 내보내기 ---------- */
 function setPreview(s,name){document.getElementById('ep2').textContent=s;APP_STATE._lastOut={text:s,name:name};}
+
+/* ═══ [v2.3.1] 출력 폴더 고정 저장 — File System Access API ═══
+   요구: 산출물을 특정 폴더(예: 바탕화면\토성)에 모아 저장한다.
+   제약(숨기지 않는다): 웹 페이지는 임의의 절대 경로에 쓸 수 없다. 'C:\...\토성' 을 코드에
+   박아 넣는 방법은 브라우저 보안 모델상 존재하지 않는다. 대신 사용자가 그 폴더를 **한 번**
+   고르면 핸들을 보관해, 이후 저장은 대화상자 없이 그 폴더에 직접 쓴다(재방문 시 권한 1회 확인).
+   미지원 환경(Firefox·Safari 등)에서는 종전처럼 브라우저 다운로드 폴더로 내려받는다. */
+var OUT_DIR={handle:null,name:null};
+function outDirSupported(){return typeof window.showDirectoryPicker==='function';}
+/* 핸들은 구조화 복제가 되므로 IndexedDB 에 보관해 새로고침을 넘긴다(경로 문자열은 얻을 수 없다) */
+function idbOpen(){
+  return new Promise(function(res,rej){
+    if(!window.indexedDB)return rej(new Error('IndexedDB 없음'));
+    var rq=indexedDB.open('dndt_outdir',1);
+    rq.onupgradeneeded=function(){rq.result.createObjectStore('h');};
+    rq.onsuccess=function(){res(rq.result);};rq.onerror=function(){rej(rq.error);};
+  });
+}
+function idbPut(k,v){return idbOpen().then(function(db){return new Promise(function(res,rej){
+  var t=db.transaction('h','readwrite');t.objectStore('h').put(v,k);
+  t.oncomplete=function(){res(true);};t.onerror=function(){rej(t.error);};});});}
+function idbGet(k){return idbOpen().then(function(db){return new Promise(function(res,rej){
+  var t=db.transaction('h','readonly'),rq=t.objectStore('h').get(k);
+  rq.onsuccess=function(){res(rq.result||null);};rq.onerror=function(){rej(rq.error);};});});}
+/* 권한 확인 — 새로고침 뒤에는 'prompt' 로 돌아오므로 저장 시점(사용자 클릭)에 요청한다 */
+function outDirPermission(h,request){
+  if(!h||!h.queryPermission)return Promise.resolve('granted');
+  return Promise.resolve(h.queryPermission({mode:'readwrite'})).then(function(st){
+    if(st==='granted'||!request||!h.requestPermission)return st;
+    return h.requestPermission({mode:'readwrite'});
+  }).catch(function(){return 'denied';});
+}
+function pickOutDir(){
+  if(!outDirSupported()){
+    alert('이 브라우저는 폴더 지정 저장(File System Access API)을 지원하지 않습니다.\n'
+      +'Chrome 또는 Edge 에서 열면 폴더를 지정할 수 있습니다.\n'
+      +'지금은 브라우저 기본 다운로드 폴더로 저장됩니다.');
+    renderOutDir();return Promise.resolve(null);
+  }
+  return Promise.resolve(window.showDirectoryPicker({id:'dndt-out',mode:'readwrite',startIn:'desktop'}))
+    .then(function(h){
+      OUT_DIR.handle=h;OUT_DIR.name=h.name;
+      renderOutDir();
+      addActionLog('출력 폴더 지정: '+h.name+' — 이후 산출물은 대화상자 없이 이 폴더에 저장됩니다');
+      return idbPut('dir',h).catch(function(){return null;}).then(function(){return h;});
+    })
+    .catch(function(e){
+      if(e&&e.name==='AbortError'){addActionLog('출력 폴더 선택 취소');return null;}
+      addActionLog('출력 폴더 지정 실패: '+(e&&e.message||e));renderOutDir();return null;
+    });
+}
+function clearOutDir(){
+  OUT_DIR.handle=null;OUT_DIR.name=null;
+  idbPut('dir',null).catch(function(){});
+  renderOutDir();addActionLog('출력 폴더 해제 — 브라우저 다운로드 폴더로 저장됩니다');
+}
+function restoreOutDir(){
+  if(!outDirSupported())return Promise.resolve(null);
+  return idbGet('dir').then(function(h){
+    if(!h)return null;
+    OUT_DIR.handle=h;OUT_DIR.name=h.name;renderOutDir();
+    return outDirPermission(h,false).then(function(st){
+      OUT_DIR.perm=st;renderOutDir();return h;
+    });
+  }).catch(function(){return null;});
+}
+window.pickOutDir=pickOutDir;window.clearOutDir=clearOutDir;window.restoreOutDir=restoreOutDir;window.OUT_DIR=OUT_DIR;
+function renderOutDir(){
+  var el=document.getElementById('outdir-info');if(!el)return;
+  if(!outDirSupported()){
+    el.innerHTML='<div class="info-box warnbox"><span class="tag twarn">미지원 브라우저</span> 폴더 지정 저장을 쓸 수 없어 <b>브라우저 기본 다운로드 폴더</b>로 저장됩니다. Chrome·Edge 에서 열면 <code>바탕화면\\토성</code> 같은 폴더를 직접 지정할 수 있습니다.</div>';return;
+  }
+  if(!OUT_DIR.handle){
+    el.innerHTML='<div class="info-box"><span class="tag tinf">폴더 미지정</span> 지금은 <b>브라우저 기본 다운로드 폴더</b>로 저장됩니다. [출력 폴더 지정]을 눌러 <code>바탕화면\\토성</code> 폴더를 고르면, 이후 저장은 대화상자 없이 그 폴더로 바로 들어갑니다.</div>';return;
+  }
+  var pw=(OUT_DIR.perm==='granted');
+  el.innerHTML='<div class="info-box" style="border-color:#2e7d46;"><span class="tag tok">출력 폴더</span> <b>'+esc(OUT_DIR.name)+'</b> '
+    +(pw?'':'<span class="tag twarn" title="새로고침 후에는 첫 저장 때 권한을 한 번 확인합니다">권한 확인 필요</span>')
+    +'<br><span style="font-size:0.8rem;color:var(--txt2)">브라우저는 폴더의 전체 경로를 앱에 알려주지 않습니다 — 표시되는 것은 폴더 이름뿐입니다. 다른 위치의 동명 폴더를 고르지 않았는지는 선택 시점에 확인하십시오.</span></div>';
+}
+window.renderOutDir=renderOutDir;
+/* 파일명 접미 — 기하 리비전·시각을 붙이면 이력이 남고, 끄면 같은 이름으로 덮어쓴다 */
+function outName(name){
+  var el=document.getElementById('outdir-stamp');
+  if(!el||!el.checked)return name;
+  var m=String(name).match(/^(.*?)(\.[^.]+)?$/),base=m[1],ext=m[2]||'';
+  var d=new Date(),p=function(v){return('0'+v).slice(-2);};
+  return base+'_r'+geomRev()+'_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+ext;
+}
+/* 통합 저장 경로 — 폴더가 지정돼 있으면 그 폴더에, 아니면 다운로드로. 어느 쪽인지 항상 보고한다 */
+function saveOut(name,text){
+  var fn=outName(name);
+  function fallback(why){
+    var blob=new Blob([text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();
+    setTimeout(function(){try{URL.revokeObjectURL(a.href);a.remove();}catch(e){}},0);
+    return{mode:'download',name:fn,why:why||null};
+  }
+  if(!OUT_DIR.handle)return Promise.resolve(fallback('폴더 미지정'));
+  return outDirPermission(OUT_DIR.handle,true).then(function(st){
+    OUT_DIR.perm=st;renderOutDir();
+    if(st!=='granted')return fallback('폴더 쓰기 권한 거부 — 다운로드 폴더로 대체');
+    return Promise.resolve(OUT_DIR.handle.getFileHandle(fn,{create:true}))
+      .then(function(fh){return fh.createWritable();})
+      .then(function(w){return Promise.resolve(w.write(text)).then(function(){return w.close();});})
+      .then(function(){return{mode:'folder',name:fn,dir:OUT_DIR.name};})
+      .catch(function(e){return fallback('폴더 쓰기 실패('+(e&&e.message||e)+') — 다운로드 폴더로 대체');});
+  });
+}
+window.saveOut=saveOut;window.outName=outName;
 function dlPreview(){
   var o=APP_STATE._lastOut;if(!o){alert('먼저 내보내기를 실행하세요.');return;}
-  var blob=new Blob([o.text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);a.download=o.name;document.body.appendChild(a);a.click();
-  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},0);
-  addActionLog('미리보기 파일 저장: '+o.name);
+  return saveOut(o.name,o.text).then(function(r){
+    addActionLog('저장: '+r.name+' → '+(r.mode==='folder'?('폴더 '+r.dir):'브라우저 다운로드 폴더')+(r.why?' ('+r.why+')':''));
+    return r;
+  });
 }
+/* [v2.3.1] 일괄 저장 — 폴더 하나에 성과품 전 형식을 모아 넣는다 */
+function expAll(){
+  var el=document.getElementById('outdir-batch');
+  var jobs=[['Handoff JSON',expJSON],['LandXML 1.2',expXML],['IFC 스텁',expIFC],
+            ['물량 개산서',expQty],['관망 CSV',expCSV],['시공성 리포트',expConstruct]];
+  var done=[],fail=[];
+  var chain=Promise.resolve();
+  jobs.forEach(function(j){
+    chain=chain.then(function(){
+      try{ j[1](); }catch(e){ fail.push(j[0]+': 생성 실패('+(e&&e.message||e)+')'); return null; }
+      var o=APP_STATE._lastOut;if(!o)  { fail.push(j[0]+': 내용 없음'); return null; }
+      return saveOut(o.name,o.text).then(function(r){done.push([j[0],r]);})
+        .catch(function(e){fail.push(j[0]+': 저장 실패('+(e&&e.message||e)+')');});
+    });
+  });
+  /* 자가 보고는 비동기 산출이라 마지막에 따로 */
+  chain=chain.then(function(){return saveRpt();})
+    .then(function(){var o=APP_STATE._lastOut;if(!o)return null;
+      return saveOut(o.name,o.text).then(function(r){done.push(['자가 보고',r]);});})
+    .catch(function(e){fail.push('자가 보고: '+(e&&e.message||e));});
+  return chain.then(function(){
+    var toFolder=done.filter(function(x){return x[1].mode==='folder';}).length;
+    if(el)el.innerHTML='<div class="info-box'+(fail.length?' warnbox':'')+'" style="margin-top:8px;">'
+      +'<b>일괄 저장 '+done.length+'건</b> — '+(toFolder?('폴더 <b>'+esc(OUT_DIR.name||'')+'</b> '+toFolder+'건'):'')
+      +(done.length-toFolder?((toFolder?' · ':'')+'브라우저 다운로드 '+(done.length-toFolder)+'건'):'')
+      +'<div style="font-size:0.82rem;color:var(--txt2);margin-top:4px;">'
+      +done.map(function(x){return esc(x[1].name);}).join(' · ')+'</div>'
+      +(fail.length?'<div style="margin-top:6px;color:var(--warn)">실패 '+fail.length+'건 — '+fail.map(esc).join(' / ')+'</div>':'')
+      +(valStale()?'<div style="margin-top:6px;color:var(--warn)">⚠ 형상 변경 후 룰셋 미재검증 상태입니다 — 저장된 산출물에 <code>validation_stale:true</code> 가 새겨져 있습니다.</div>':'')
+      +'</div>';
+    addActionLog('일괄 저장: '+done.length+'건'+(fail.length?(' · 실패 '+fail.length+'건'):'')+(toFolder?(' → 폴더 '+OUT_DIR.name):' → 다운로드 폴더'));
+    return{saved:done.length,folder:toFolder,failed:fail};
+  });
+}
+window.expAll=expAll;
 function expJSON(){
   var payload={schema:'drain_input/v1',app_version:APP_VERSION,epsg:APP_STATE.epsg,
     project:txt('pn','무의도 해안관광도로'),owner:txt('po',''),lod:txt('ps',''),
@@ -2948,7 +3107,7 @@ function expConstruct(){
   addActionLog('시공성 검토 리포트 생성');
 }
 function saveRpt(){
-  Promise.resolve(APP_API.run({schema:'drain_input/v1',epsg:APP_STATE.epsg,nodes:APP_STATE.nodes,pipes:APP_STATE.pipes}))
+  return Promise.resolve(APP_API.run({schema:'drain_input/v1',epsg:APP_STATE.epsg,nodes:APP_STATE.nodes,pipes:APP_STATE.pipes}))
     .then(function(rr){setPreview(JSON.stringify(rr,null,2),'app_report.json');addActionLog('자가 보고 생성: ok='+rr.ok);})
     .catch(function(e){setPreview('자가 보고 실패: '+(e&&e.message||e),'app_report_error.txt');addActionLog('자가 보고 실패');});
 }
@@ -3378,6 +3537,7 @@ document.addEventListener('DOMContentLoaded',function(){
   renderNodeTable();renderPipeTable();renderUtilTable();genDyn();rfIso();drawWDCanvas();renderAudit();renderHelp();
   renderCBasis();cMode();idfBadge(); /* [v2.3.0 P1-1·P1-2] 유출계수 산출 근거 · IDF 출처 배지 */
   renderDemInfo(null); /* [v2.3.0 P3-1] 지형 출처 모드 배너 */
+  renderOutDir();restoreOutDir(); /* [v2.3.1] 출력 폴더 — 이전 선택을 복원(권한은 첫 저장 때 확인) */
   syncWDOriginToNodes(false); /* [v2.2.0 ⑤] 격자 원점 기본값 = 노드 중심 파생 */
   /* [정정 2026-08-10 재감사] DELIB_GATES 노출을 runLawGate() 안에만 두었더니, 이 함수가
      버튼 클릭으로만 실행되어 **무인·헤드리스 심의 회람에서는 여전히 T2 미도달**이었다
@@ -3498,7 +3658,7 @@ window.renderHelp=renderHelp;window.ckToggle=ckToggle;
 (function () {
   'use strict';
 
-  var APP = { app_id: 'drain_network_design_tool_v2', version: '2.3.0',
+  var APP = { app_id: 'drain_network_design_tool_v2', version: '2.3.1',
               std: 'deliberation-std/v1' };
   var DELIB_HASH = 'dbaf4050';
 
@@ -4413,7 +4573,7 @@ window.BIM_GUIDELINE_BASIS = [{"book":"설계자편","art":"2.3.3 (가) 표 9 �
 (function () {
   'use strict';
 
-  var APP = { app_id: 'drain_network_design_tool_v2', version: '2.3.0', mode: 'adapter',
+  var APP = { app_id: 'drain_network_design_tool_v2', version: '2.3.1', mode: 'adapter',
               std: 'handoff-contract-std/v2' };
   var STD_HASH = '293c34e6';
 

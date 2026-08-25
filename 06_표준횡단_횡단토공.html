@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>06 표준횡단과 횡단토공 v1.1.0 — KDS 44 20 05·20 10 횡단구성</title>
+<title>06 표준횡단과 횡단토공 v1.1.1 — KDS 44 20 05·20 10 횡단구성</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:13px;background:#1a1a2e;color:#e0e0e0;min-height:100vh}
@@ -88,7 +88,7 @@ input[type=range]{accent-color:#e94560;width:100%}
 <body>
 <div id="app-wrap">
 <header>
-  <h1>🏗 표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.0</h1>
+  <h1>🏗 표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.1</h1>
   <div class="badges">
     <span>Civil 3D 2027 KR</span><span>KDS 44 20 05/10</span><span id="epsg-badge">EPSG:5186</span><span>BIM 시행지침</span><span id="coord-badge" style="background:#e65100" title="E/N 좌표 출처 상태 — 합성(Synthesized)이면 하류 핸드오프 차단 대상 (Node06 고도화 §4.1)">좌표: 합성(미승계)</span>
   </div>
@@ -1001,6 +1001,9 @@ function handleCSV(evt) {
     addActionLog('CSV 로드: '+APP_STATE.stations.length+'개 측점 (편집 가능)', 'ok');
   };
   reader.readAsText(file, 'utf-8');
+  /* [정정 v1.1.1 재감사] 입력값 미초기화로 같은 파일 재선택 시 change 미발화 —
+     외부에서 수정한 동일 CSV 재로드가 조용히 무시되던 것 (핸드오프 로더와 동일 처리). */
+  evt.target.value = '';
 }
 
 // ─── 선형앱 핸드오프 수용 어댑터 (alignment_output/v1) ─────────────────────────
@@ -1016,7 +1019,9 @@ function normalizeHandoff(input) {
     var sta = parseFloat(s.sta != null ? s.sta : s.station);
     var eg = parseFloat(s.eg != null ? s.eg : (s.egZ != null ? s.egZ : s.EG));
     var dg = parseFloat(s.dg != null ? s.dg : (s.fgZ != null ? s.fgZ : (s.fg != null ? s.fg : s.DG)));
-    var stype = (s.stype || 'R'); if (!['R','B','T'].includes(stype)) stype = 'R';
+    /* [정정 v1.1.1 재감사] 대소문자 구분 검사로 소문자 'b'/'t' 교량·터널이 조용히 'R'(도로)로
+       강등돼 교량 경간에 토공 물량이 계상되던 것 — handleCSV 와 동일하게 대문자 정규화. */
+    var stype = String(s.stype || 'R').trim().toUpperCase(); if (!['R','B','T'].includes(stype)) stype = 'R';
     var gtype = (s.gtype || 'soil'); if (!['soil','ripping','blast'].includes(gtype)) gtype = 'soil';
     /* [정정 2026-08-10 전수감사] 상류가 실제 측점 좌표를 주면 그것을 승계한다.
        종전에는 무조건 직선가정으로 합성해 실좌표가 있어도 버렸다. */
@@ -1082,7 +1087,12 @@ function handleAlignmentHandoff(evt) {
     if (!norm.stations.length) { addActionLog('핸드오프에 유효한 측점 없음', 'err'); alert('핸드오프에 측점 데이터(stations[])가 없습니다.'); return; }
     if (norm.epsg !== undefined) {
       if (EPSG_ALLOWED.indexOf(norm.epsg) === -1) {
-        addActionLog('경고: 핸드오프 EPSG '+norm.epsg+' 미지원(허용:5179/5185/5186/5187/5188)', 'warn');
+        /* [정정 v1.1.1 재감사] 종전에는 경고만 찍고 외국 좌표계(예: UTM)의 E/N 을 그대로 적재했다 —
+           coordSynthetic=false 로 R05 는 PASS 인데 내보내기는 선택 벨트(EPSG:5186 등)로 라벨링되어,
+           전 게이트 녹색인 채 하류 CAD 가 수백 km 어긋난 좌표를 소비한다. 미지원 벨트는 적재 자체를 차단한다. */
+        addActionLog('차단: 핸드오프 EPSG '+norm.epsg+' 미지원(허용:5179/5185/5186/5187/5188) — 적재 거부. 상류에서 KGD2002 벨트로 재투영 후 재발행 요구', 'err');
+        alert('핸드오프 좌표계 EPSG:'+norm.epsg+' 는 이 앱이 지원하지 않는 벨트입니다.\n허용: 5179/5185/5186/5187/5188 (KGD2002)\n적재를 차단했습니다 — 상류에서 재투영 후 재발행하세요.');
+        return;
       } else {
         APP_EPSG = norm.epsg;
         /* [정정 2026-08-10 재감사] 배지·APP_EPSG 만 바꾸고 epsg-code 셀렉터를 갱신하지 않아,
@@ -1597,9 +1607,13 @@ function runLawGate() {
   /* [신설 2026-08-10 전수감사] 심의 T2 가 읽는 지점. 종전에는 01 만 이 전역을 세워
      05·06·07 은 T2 에 영원히 도달하지 못했고, 게이트 FAIL 이 있어도 소견이 T1 수준에
      머물러 "미검사"와 "검사해서 통과"가 뒤섞였다. */
+  /* [정정 v1.1.1 재감사] 전면 대입은 HYBRID(부지조성 RS 게이트)가 게시한 외부 판정을
+     지워버렸다 — 역방향으로 HYBRID 도 R05 FAIL 을 지웠다(어느 쪽이 나중에 실행되든
+     상대 판정 소실). 외부(source:'external:*') 항목은 보존하고 앱 자체 게이트만 교체한다. */
+  var _extGates = (window.DELIB_GATES||[]).filter(function(g){ return g && g.source && String(g.source).indexOf('external:')===0; });
   window.DELIB_GATES = results.map(function(r){
     return { id:r.gate, label:r.label, verdict:(r.ok?'PASS':'FAIL'), detail:String(r.label) };
-  });
+  }).concat(_extGates);
   addActionLog('근거 게이트 '+(pass?'PASS':'FAIL')+' (G1~G6 + R01~R06 설계값·파이프라인 실측)', pass?'ok':'err');
   showStep(7);
   return pass;
@@ -1628,7 +1642,7 @@ function genAssemblyScript() {
   var script = '# -*- coding: utf-8 -*-\r\n'
     +'# 표준횡단(Assembly) 생성 스크립트\r\n'
     +'# Civil 3D 2027 KR / Dynamo 4.x / PythonNet3 / .NET 10\r\n'
-    +'# 자동생성: 표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.0\r\n'
+    +'# 자동생성: 표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.1\r\n'
     +'# KDS 44 20 05 : 2023 기준 파라미터\r\n'
     +'# RULE-AH: Assembly/Subassembly 생성 API 시그니처는 실머신에서 확인 권장\r\n\r\n'
     +'import clr\r\n'
@@ -1882,7 +1896,7 @@ function genToposolidScript() {
   var script = '# -*- coding: utf-8 -*-\r\n'
     +'# Revit Toposolid 서브디비전 자동 분할 (코리더 외곽 → CreateSubDivision)\r\n'
     +'# Revit 2027 / Revit API (Toposolid: Revit 2024+) / EPSG:'+_ep+'\r\n'
-    +'# 자동생성: 표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.0 [Node06 고도화 §5.1]\r\n'
+    +'# 자동생성: 표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.1 [Node06 고도화 §5.1]\r\n'
     +'# RULE-AH: Toposolid.CreateSubDivision 시그니처·실행환경(Dynamo/pyRevit/RPS)은 실머신에서 확인 권장\r\n'
     +(_syn?'# ⚠ 경고: 외곽 좌표는 원점+방위각 직선가정 합성 추정값(Synthesized) — 곡선구간 오차 큼.\r\n'
           +'#    상류 선형 실좌표 승계 후 재생성하여 사용할 것 (R05 게이트 참조).\r\n'
@@ -1926,7 +1940,7 @@ function genToposolidScript() {
     +'            mat_id = m.Id\r\n'
     +'            break\r\n'
     +'    out = []\r\n'
-    +'    tx = Transaction(doc, "Corridor Subdivision (Node06 v1.1.0)")\r\n'
+    +'    tx = Transaction(doc, "Corridor Subdivision (Node06 v1.1.1)")\r\n'
     +'    tx.Start()\r\n'
     +'    try:\r\n'
     +'        for i, pts in enumerate(BOUNDARY_LOOPS_M):\r\n'
@@ -2022,6 +2036,9 @@ function exportHandoff() {
     /* [v1.1.0 §3.2] 체적 산출 방법 선언 — 단면 근사치임을 명시, Civil 3D 복합토량 대조 강제 */
     volume_method: { method: (document.getElementById('vol-method')||{}).value||'avg_end',
                      basis: 'section_approximation',
+                     /* [정정 v1.1.1] Step1 BEP 의 토공 연계 선언(qty-link)이 어디에도 반영되지 않는
+                        죽은 입력이었다 — 하류가 소비할 BEP 선언 산법으로 핸드오프에 싣는다. */
+                     bep_declared: (document.getElementById('qty-link')||{}).value||'composite',
                      composite_verification_required: true,
                      note: 'Civil 3D 코리더 TIN 프리즘 적분(복합토량) 실측값으로 확정할 것 — 급곡선·교차로 왜곡' },
     /* [v1.1.0 §3.1] 지반유형별 토량변화율 — 하류 유토·사토장 계획의 필수 매개변수 */
@@ -2058,7 +2075,7 @@ function exportHandoff() {
   var handoff = {
     schema: 'cross_section_output/v1',
     epsg: getEpsg(),
-    generated_by: 'assembly_cross_section_tool@1.1.0',
+    generated_by: 'assembly_cross_section_tool@1.1.1',
     generated_at: new Date().toISOString(),
     checksum: fnv1a(payStr),
     payload: payload
@@ -2084,25 +2101,38 @@ function exportLandXML() {
   var _syn = !!APP_STATE.coordSynthetic;
   var xml = '<?xml version="1.0" encoding="UTF-8"?>\r\n'
     +'<LandXML version="1.2" xmlns="http://www.landxml.org/schema/LandXML-1.2">\r\n'
-    +'  <Application name="assembly_cross_section_tool" version="1.1.0" manufacturer="BIM-Harness"/>\r\n'
+    +'  <Application name="assembly_cross_section_tool" version="1.1.1" manufacturer="BIM-Harness"/>\r\n'
     +'  <Project name="'+(document.getElementById('proj-name')||{value:''}).value+'"/>\r\n'
     +'  <!-- EPSG:'+getEpsg()+' KGD2002 -->\r\n'
     +(_syn?'  <!-- ⚠ 경고: 아래 좌표는 실측·선형계산 값이 아니라 원점+방위각 직선 가정으로\r\n'
           +'       합성한 추정값이다. 곡선 구간에서 실제 위치와 크게 어긋난다.\r\n'
           +'       상류 선형(Alignment) 실좌표로 반드시 대체할 것. -->\r\n':
            '  <!-- E/N 출처: 상류 핸드오프가 공급한 측점 좌표 -->\r\n')
-    +'  <CoordinateSystem name="KGD2002" epsgCode="'+getEpsg()+'"/>\r\n'
-    +'  <Alignments>\r\n'
-    +'    <Alignment name="도로중심선'+(_syn?' (좌표합성-검증전)':'')+'" length="'+(APP_STATE.stations.length>1?(APP_STATE.stations[APP_STATE.stations.length-1].sta-APP_STATE.stations[0].sta).toFixed(3):'0')+'">\r\n'
-    +'      <CoordGeom>\r\n';
+    +'  <CoordinateSystem name="KGD2002" epsgCode="'+getEpsg()+'"/>\r\n';
+  /* [정정 v1.1.1 재감사] Line@length 를 측점차(호 길이)로 적으면서 기하는 두 점의 현(chord)이라,
+     실좌표 곡선 구간에서 선언 길이와 기하가 어긋난 파일이 나왔다(선언-기하 불일치 — v1.1.0 이
+     고쳤다고 주석한 바로 그 오류 부류). Line 요소는 직선이므로 현 길이로 선언하고,
+     Alignment@length 도 현 길이 합으로 일치시킨다. 측점 전장은 주석으로 병기. */
+  var _lines='', _chordSum=0;
   for (var i=1; i<APP_STATE.stations.length; i++) {
     var s0=APP_STATE.stations[i-1], s1=APP_STATE.stations[i];
-    xml+='        <Line length="'+(s1.sta-s0.sta).toFixed(3)+'">\r\n'
+    var chord=Math.sqrt(Math.pow(s1.e-s0.e,2)+Math.pow(s1.n-s0.n,2));
+    _chordSum+=chord;
+    _lines+='        <Line length="'+chord.toFixed(3)+'">\r\n'
       +'          <Start>'+s0.n.toFixed(4)+' '+s0.e.toFixed(4)+'</Start>\r\n'
       +'          <End>'+s1.n.toFixed(4)+' '+s1.e.toFixed(4)+'</End>\r\n'
       +'        </Line>\r\n';
   }
-  xml+='      </CoordGeom>\r\n    </Alignment>\r\n  </Alignments>\r\n</LandXML>';
+  var _staLen=APP_STATE.stations.length>1?(APP_STATE.stations[APP_STATE.stations.length-1].sta-APP_STATE.stations[0].sta):0;
+  if (Math.abs(_chordSum-_staLen)>0.01*Math.max(_staLen,1)) {
+    xml+='  <!-- 주의: 측점 전장 '+_staLen.toFixed(3)+'m 와 현 길이 합 '+_chordSum.toFixed(3)+'m 가 상이 —\r\n'
+       +'       곡선 선형의 현(chord) 근사이므로 정밀 선형은 상류 Alignment 원본을 사용할 것 -->\r\n';
+  }
+  xml+='  <Alignments>\r\n'
+    +'    <Alignment name="도로중심선'+(_syn?' (좌표합성-검증전)':'')+'" length="'+_chordSum.toFixed(3)+'" desc="측점전장 '+_staLen.toFixed(3)+'m, 기하=현 근사">\r\n'
+    +'      <CoordGeom>\r\n'
+    +_lines
+    +'      </CoordGeom>\r\n    </Alignment>\r\n  </Alignments>\r\n</LandXML>';
   download('cross_section_alignment_20260724_201932.xml', xml, 'application/xml');
   addActionLog('LandXML 내보내기 완료', 'ok');
 }
@@ -2169,7 +2199,9 @@ async function sendAI() {
   var input = document.getElementById('ai-input').value.trim();
   if (!input) return;
   var chat=document.getElementById('ai-chat');
-  chat.innerHTML += '<div class="msg-user">👤 '+input+'</div>';
+  /* [정정 v1.1.1 재감사] innerHTML 연결은 '<' 포함 질문(예: cfh < 0)을 잘라먹고
+     마크업 주입을 허용했다 — textContent 로 안전하게 렌더. */
+  var _um=document.createElement('div'); _um.className='msg-user'; _um.textContent='👤 '+input; chat.appendChild(_um);
   document.getElementById('ai-input').value = '';
   document.getElementById('ai-status').textContent = '⏳ 응답 생성 중...';
   var sysPrompt = '당신은 한국 도로 BIM 설계 전문가입니다. KDS 44 20 05(횡단구성), KDS 44 20 10(선형설계), Civil 3D 2027 KR 기반 표준횡단 설계 전문가입니다.\n'
@@ -2218,11 +2250,11 @@ function translateApiError(status, msg) {
 // ─── APP_API (app_api/v1) ───────────────────────────────────────────────────────
 var APP_API = {
   app_id: 'assembly_cross_section_tool',
-  version: '1.1.0',
+  version: '1.1.1',
   describe: function() {
     return {
       app_id: 'assembly_cross_section_tool',
-      version: '1.1.0',
+      version: '1.1.1',
       schema: 'app_api/v1',
       epsg: APP_EPSG,
       inputs: [{key:'assembly_input',schema:'assembly_input/v1',required:true,fields:['lane_width','lane_count','shoulder_width','cross_slope_pct','cut_slope_soil','cut_slope_ripping','cut_slope_blast','fill_slope','stations']}],
@@ -2246,7 +2278,7 @@ var APP_API = {
     var vr = APP_API.validate(input);
     var t0 = new Date().toISOString();
     if (!vr.ok) {
-      return {schema:'app_report/v1',app_id:'assembly_cross_section_tool',version:'1.1.0',status:'fail',started_at:t0,finished_at:new Date().toISOString(),warnings:[],errors:vr.errors,metrics:{},outputs:{},checksum:'00000000',retry_hint:'입력 스키마 오류. validate() 결과를 확인하세요.'};
+      return {schema:'app_report/v1',app_id:'assembly_cross_section_tool',version:'1.1.1',status:'fail',started_at:t0,finished_at:new Date().toISOString(),warnings:[],errors:vr.errors,metrics:{},outputs:{},checksum:'00000000',retry_hint:'입력 스키마 오류. validate() 결과를 확인하세요.'};
     }
     // 선형앱 핸드오프(alignment_output/v1)에 측점이 실려오면 자동 적재
     try { var norm = normalizeHandoff(input); if (norm.stations && norm.stations.length) applyStations(norm.stations); } catch(e){}
@@ -2261,7 +2293,14 @@ var APP_API = {
       adjusted_balance_m3:Math.round((totalUsable-totalFill)*10)/10,
       coord_synthetic:!!APP_STATE.coordSynthetic,struct_zone_count:getStructZones().length};
     var payStr=JSON.stringify(metrics);
-    var report={schema:'app_report/v1',app_id:'assembly_cross_section_tool',version:'1.1.0',status:'ok',started_at:t0,finished_at:new Date().toISOString(),warnings:[],errors:[],metrics:metrics,outputs:{cross_section_output:'output/cross_section_handoff_20260724_201932.json',report:'output/reports/report_20260724_201932.json'},checksum:fnv1a(payStr),retry_hint:null};
+    /* [정정 v1.1.1 재감사] ① 쓴 적 없는 파일 경로를 outputs 로 단언하던 것 — 실제로는
+       exportHandoff() 실행 시 브라우저 다운로드로 생성된다. 미작성 산출물을 경로로 확언하지 않는다.
+       ② 좌표합성 상태인데 warnings 가 비어 status:'ok' 만 나가던 것 — R05 상태를 경고로 싣는다. */
+    var warns=[];
+    if (APP_STATE.coordSynthetic) warns.push('R05 좌표합성(Synthesized) 상태 — 하류 배치 사용 금지, 상류 실좌표 재발행 요구');
+    var report={schema:'app_report/v1',app_id:'assembly_cross_section_tool',version:'1.1.1',status:'ok',started_at:t0,finished_at:new Date().toISOString(),warnings:warns,errors:[],metrics:metrics,
+      outputs:{cross_section_output:null,report:'(inline)',note:'핸드오프 파일은 exportHandoff() 실행 시 브라우저 다운로드로 생성됨 — 사전 경로 단언 금지'},
+      checksum:fnv1a(payStr),retry_hint:null};
     document.getElementById('report-preview').textContent=JSON.stringify(report,null,2);
     return report;
   }
@@ -2288,7 +2327,7 @@ window.addEventListener('DOMContentLoaded', function() {
     _sync();   /* 로드 시점의 선택값도 반영 — 기본값과 셀렉터가 갈리지 않도록 */
   })();
   updateCoordBadge();
-  addActionLog('표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.0 초기화 완료', 'ok');
+  addActionLog('표준횡단 정의 및 측점별 횡단면 계산 자동화 v1.1.1 초기화 완료', 'ok');
   addActionLog('환경: Civil 3D 2027 KR | EPSG:'+APP_EPSG+' | KDS 44 20 05/10 | BIM 시행지침', 'info');
   addActionLog('v1.1.0 고도화: 지반유형별 토량변화율(L/C)·곡선부 체적왜곡 게이트(R06)·좌표합성 차단(R05)·구조물 타겟 스위칭·Revit Toposolid·5D 가상분할', 'info');
   addActionLog('Step 1에서 프로젝트 설정 후 Step 2에서 표준횡단을 정의하세요.', 'info');
@@ -2321,7 +2360,7 @@ window.addActionLog     = addActionLog;
 (function () {
   'use strict';
 
-  var APP = { app_id: 'assembly_cross_section_tool', version: '1.0.1',
+  var APP = { app_id: 'assembly_cross_section_tool', version: '1.1.1', /* [주입기 토큰 재각인 v1.1.1] */
               std: 'deliberation-std/v1' };
   var DELIB_HASH = 'dbaf4050';
 
@@ -3197,9 +3236,9 @@ window.BIM_GUIDELINE_BASIS = [{"book":"설계자편","art":"2.4.2 (2) 수량산�
 
 /* ═══ [DECISION-V1-END] ═══ */
 </script>
-</body>
-</html>
-
+<!-- [정정 v1.1.1 재감사] 종전에는 여기서 </body></html> 이 닫힌 뒤 SPEC-V2·BIND-V2·HYBRID-V1
+     스크립트가 문서 밖에 놓여 구조적으로 무효한 HTML 이었다 — 엄격한 파서·주입기가 핸드오프
+     수신부를 통째로 유실할 수 있어 닫는 태그를 문서 말미로 이동했다. -->
 <script>
 /* ═══ [SPEC-V2-BEGIN] handoff-contract-std/v2 — 자동 주입 구간. 직접 편집 금지 ═══
    정본: 토목BIM_에이전트_교환소\handoff_std_v2.js (정본해시 293c34e6)
@@ -3218,7 +3257,7 @@ window.BIM_GUIDELINE_BASIS = [{"book":"설계자편","art":"2.4.2 (2) 수량산�
 (function () {
   'use strict';
 
-  var APP = { app_id: 'assembly_cross_section_tool', version: '1.0.1', mode: 'adapter',
+  var APP = { app_id: 'assembly_cross_section_tool', version: '1.1.1', mode: 'adapter', /* [주입기 토큰 재각인 v1.1.1] */
               std: 'handoff-contract-std/v2' };
   var STD_HASH = '293c34e6';
 
@@ -3601,7 +3640,10 @@ window.HANDOFF_BIND = {
     var gates=window.judgeSiteGrading(p);
     window.HYBRID_SITE={ payload:p, gates:gates, received_at:new Date().toISOString() };
     var stamp={ at:new Date().toISOString(), state_hash:(typeof fnv1a==='function'?fnv1a(JSON.stringify(p.volumes)+JSON.stringify(p.zones)):null) };
-    window.DELIB_GATES = gates.map(function(x){ return { id:x.id, label:x.label, verdict:(x.pass===null?'HOLD':(x.pass?'PASS':'FAIL')), detail:String(x.val), evaluated_at:stamp.at, state_hash:stamp.state_hash, source:'external:'+p.source.tool+':'+p.surfaces.dg }; });
+    /* [정정 v1.1.1 재감사] 전면 대입이 앱 자체 R01~R06(특히 R05 좌표합성 FAIL)을 지워
+       심의 T2 가 좌표 무결성 실패를 못 보게 했다 — 기존 앱 게이트는 보존하고 RS(외부)만 교체. */
+    window.DELIB_GATES = (window.DELIB_GATES||[]).filter(function(g){ return !(g && g.source && String(g.source).indexOf('external:')===0); })
+      .concat(gates.map(function(x){ return { id:x.id, label:x.label, verdict:(x.pass===null?'HOLD':(x.pass?'PASS':'FAIL')), detail:String(x.val), evaluated_at:stamp.at, state_hash:stamp.state_hash, source:'external:'+p.source.tool+':'+p.surfaces.dg }; }));
     var b=ensurePanel(); var d=document.getElementById('hybrid-site-detail');
     var rows=gates.map(function(x){ var st=x.pass===null?'HOLD':(x.pass?'PASS':'FAIL'); var col=x.pass===null?'#c80':(x.pass?'#0a7':'#c33'); return '<div style="display:flex;gap:8px;margin:2px 0"><b style="min-width:34px">'+x.id+'</b><span style="flex:1">'+esc2(x.label)+'</span><span style="color:'+col+';font-weight:700">'+st+'</span><span style="color:#666">'+esc2(x.val)+'</span></div>'; }).join('');
     b.innerHTML='&#x1F517; <b>상용앱 부지 RS</b> '+esc2(p.surfaces.dg)+'<br>'+gates.map(function(x){ var st=x.pass===null?'HOLD':(x.pass?'PASS':'FAIL'); var col=x.pass===null?'#c80':(x.pass?'#0a7':'#c33'); return '<span style="color:'+col+';font-weight:700">'+x.id+' '+st+'</span>'; }).join(' · ');
@@ -3635,3 +3677,5 @@ window.HANDOFF_BIND = {
 /* ═══ [HYBRID-V1-END] ═══ */
 
 </script>
+</body>
+</html>

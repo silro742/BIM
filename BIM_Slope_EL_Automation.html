@@ -111,7 +111,7 @@ table td{padding:6px 12px;border-top:1px solid rgba(30,41,59,.5)}
 // ============================================================
 // HTML 특수문자 치환 함수 (보안 및 화면 깨짐 방지)
 function escapeHTML(str){
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function rc(label,value,highlight){
@@ -132,7 +132,7 @@ function delaunayTriangulate(points2d) {
     if(points2d[i][1]>maxY)maxY=points2d[i][1];
   }
   const dx=maxX-minX,dy=maxY-minY,dmax=Math.max(dx,dy),midx=(minX+maxX)/2,midy=(minY+maxY)/2;
-  const p0=[midx-20*dmax,midy-dmax],p1=[midx+20*dmax,midy-dmax],p2=[midx,midy+20*dmax];
+  const p0=[midx-20*dmax,midy-20*dmax],p1=[midx+20*dmax,midy-20*dmax],p2=[midx,midy+20*dmax];
   const pts=[...points2d,p0,p1,p2];
   const st={v:[n,n+1,n+2]};
   computeCircum(st,pts);
@@ -142,7 +142,6 @@ function delaunayTriangulate(points2d) {
     const px=pts[i][0],py=pts[i][1];
     let edges=[];
     triangles=triangles.filter(t=>{
-      if(px===undefined)return true;
       const ddx=px-t.cx,ddy=py-t.cy;
       if(ddx*ddx+ddy*ddy<t.r2){
         edges.push([t.v[0],t.v[1]],[t.v[1],t.v[2]],[t.v[2],t.v[0]]);
@@ -260,12 +259,14 @@ class TINSurface {
     const hDist=Math.sqrt(dx*dx+dy*dy);
     const d3d=Math.sqrt(dx*dx+dy*dy+dz*dz);
     if(hDist<1e-10) return null;
+    // 경사도(%)와 각도는 항상 수평거리 기준(표준 정의); use3d는 경사비(ratio)의 사면장 기준 여부만 결정
+    const slopePct=(dz/hDist)*100;
+    const slopeDeg=Math.atan2(dz,hDist)*180/Math.PI;
     const run=use3d?d3d:hDist;
-    const slopePct=(dz/run)*100;
-    const slopeDeg=Math.atan2(dz,run)*180/Math.PI;
     const ratioVal=Math.abs(dz)>1e-10?run/Math.abs(dz):Infinity;
     const ratio=ratioVal===Infinity?"1:INF (flat)":`1:${ratioVal.toFixed(1)}`;
-    const arrowAngle=slopePct<=0?0:Math.PI;
+    // 내리막 방향의 평면 방위각 (rad, +X축 기준 반시계)
+    const arrowAngle=dz<=0?Math.atan2(dy,dx):Math.atan2(-dy,-dx);
     let dir;
     if(dz<0) dir=`Downhill from A(EL:${zA.toFixed(2)}) to B(EL:${zB.toFixed(2)})`;
     else if(dz>0) dir=`Uphill from A(EL:${zA.toFixed(2)}) to B(EL:${zB.toFixed(2)})`;
@@ -297,7 +298,7 @@ class TINSurface {
     const zStart=this.getElevation(sx,sy);
     if(zStart===null)return null;
     const path=[{x:sx,y:sy,z:zStart}];
-    let cx=sx,cy=sy,totalLen=0;
+    let cx=sx,cy=sy,totalLen=0,flatSteps=0;
     for(let i=0;i<maxSteps;i++){
       const grad=this._computeGradient(cx,cy);
       if(!grad)break;
@@ -305,7 +306,10 @@ class TINSurface {
       if(mag<1e-6)break;
       const mx=-grad[0]/mag*stepSize, my=-grad[1]/mag*stepSize;
       const nx=cx+mx, ny=cy+my, nz=this.getElevation(nx,ny);
-      if(nz===null||nz>=path[path.length-1].z)break;
+      const lastZ=path[path.length-1].z;
+      if(nz===null||nz>lastZ+1e-9)break; // 오르막이면 종료 (동일 고도는 평탄부로 간주)
+      flatSteps=(lastZ-nz<1e-6)?flatSteps+1:0;
+      if(flatSteps>10)break; // 평탄부는 최대 10스텝까지만 통과
       const segLen=Math.sqrt(mx**2+my**2+(nz-path[path.length-1].z)**2);
       totalLen+=segLen;
       path.push({x:Math.round(nx*1000)/1000,y:Math.round(ny*1000)/1000,z:Math.round(nz*1000)/1000});
@@ -326,7 +330,7 @@ class TINSurface {
       let count=0,area=0;
       for(const t of this.triangles){
         const avgZ=(this.points[t[0]].z+this.points[t[1]].z+this.points[t[2]].z)/3;
-        if(avgZ>=bMin&&(avgZ<bMax||(i===numElevBands-1&&avgZ===bMax))){count++;area+=this._triArea3d(t);}
+        if(avgZ>=bMin&&(avgZ<bMax||i===numElevBands-1)){count++;area+=this._triArea3d(t);}
       }
       elevBands.push({min_elevation:Math.round(bMin*100)/100,max_elevation:Math.round(bMax*100)/100,color:elevColors[i%elevColors.length],area:Math.round(area*100)/100,triangle_count:count});
     }
@@ -339,7 +343,7 @@ class TINSurface {
       let count=0,area=0;
       for(let j=0;j<this.triangles.length;j++){
         const s=triSlopes[j];
-        if(s>=bMin&&(s<bMax||(i===numSlopeBands-1&&s===bMax))){count++;area+=this._triArea3d(this.triangles[j]);}
+        if(s>=bMin&&(s<bMax||i===numSlopeBands-1)){count++;area+=this._triArea3d(this.triangles[j]);}
       }
       slopeBands.push({min_slope:Math.round(bMin*100)/100,max_slope:Math.round(bMax*100)/100,color:slopeColors[i%slopeColors.length],area:Math.round(area*100)/100,triangle_count:count});
     }
@@ -351,7 +355,7 @@ class TINSurface {
       const grad=this._computeGradient(cx,cy);
       let ddx=0,ddy=0;
       if(grad){const m=Math.sqrt(grad[0]**2+grad[1]**2);if(m>1e-6){ddx=-grad[0]/m;ddy=-grad[1]/m;}}
-      const ci=Math.min(Math.floor(triSlopes[j]/(slopeStep||1)),numSlopeBands-1);
+      const ci=Math.max(0,Math.min(Math.floor((triSlopes[j]-minSlope)/(slopeStep||1)),numSlopeBands-1));
       slopeArrows.push({centroid:{x:Math.round(cx*1000)/1000,y:Math.round(cy*1000)/1000,z:Math.round(cz*1000)/1000},slope_degrees:Math.round(triSlopes[j]*100)/100,direction_x:Math.round(ddx*10000)/10000,direction_y:Math.round(ddy*10000)/10000,color:slopeColors[ci%slopeColors.length]});
     }
     const totalArea=this.triangles.reduce((s,t)=>s+this._triArea3d(t),0);
@@ -363,25 +367,37 @@ class TINSurface {
     if(pz===null)return null;
     const startIdx=this.findTriangle(px,py);
     if(startIdx===-1)return null;
+    const centroid=(ti)=>{
+      const t=this.triangles[ti];
+      return {
+        x:(this.points[t[0]].x+this.points[t[1]].x+this.points[t[2]].x)/3,
+        y:(this.points[t[0]].y+this.points[t[1]].y+this.points[t[2]].y)/3,
+        z:(this.points[t[0]].z+this.points[t[1]].z+this.points[t[2]].z)/3
+      };
+    };
     const visited=new Set([startIdx]),queue=[startIdx],contributing=new Set([startIdx]);
     while(queue.length>0){
       const cur=queue.shift();
+      const cc=centroid(cur);
       for(const nb of this.triNeighbors[cur]){
-        if(nb===-1||visited.has(nb))continue;
+        if(visited.has(nb))continue;
         visited.add(nb);
-        const t=this.triangles[nb];
-        const cz=(this.points[t[0]].z+this.points[t[1]].z+this.points[t[2]].z)/3;
-        const ct=this.triangles[cur];
-        const curZ=(this.points[ct[0]].z+this.points[ct[1]].z+this.points[ct[2]].z)/3;
-        if(cz>=curZ){
-          const cx=(this.points[t[0]].x+this.points[t[1]].x+this.points[t[2]].x)/3;
-          const cy=(this.points[t[0]].y+this.points[t[1]].y+this.points[t[2]].y)/3;
-          const g=this._computeGradient(cx,cy);
-          if(g){contributing.add(nb);queue.push(nb);}
+        const nc=centroid(nb);
+        if(nc.z>=cc.z){
+          const g=this._computeGradient(nc.x,nc.y);
+          if(g){
+            const m=Math.sqrt(g[0]*g[0]+g[1]*g[1]);
+            if(m>1e-9){
+              // 이웃 삼각형의 최급강하(흐름) 방향이 실제로 현재 삼각형 쪽을 향할 때만 유역에 편입
+              const fx=-g[0]/m, fy=-g[1]/m;
+              const vx=cc.x-nc.x, vy=cc.y-nc.y;
+              if(fx*vx+fy*vy>1e-9){contributing.add(nb);queue.push(nb);}
+            }
+          }
         }
       }
     }
-    const boundaryPts=[],elevs=[];let totalArea=0;
+    const contribVerts=[],elevs=[];let totalArea=0;
     const seen=new Set();
     for(const ti of contributing){
       const t=this.triangles[ti];
@@ -389,12 +405,12 @@ class TINSurface {
       for(const idx of t){
         const p=this.points[idx];elevs.push(p.z);
         const key=`${p.x}_${p.y}_${p.z}`;
-        if(!seen.has(key)){seen.add(key);boundaryPts.push({x:p.x,y:p.y,z:p.z});}
+        if(!seen.has(key)){seen.add(key);contribVerts.push({x:p.x,y:p.y,z:p.z});}
       }
     }
     if(!elevs.length)return null;
     const slopeVals=[...contributing].map(ti=>this._triSlopeDeg(this.triangles[ti]));
-    return {pour_point:{x:px,y:py,z:pz},boundary_points:boundaryPts,area:Math.round(totalArea*100)/100,avg_slope:slopeVals.length?Math.round(slopeVals.reduce((a,b)=>a+b,0)/slopeVals.length*100)/100:0,max_elevation:Math.round(Math.max(...elevs)*100)/100,min_elevation:Math.round(Math.min(...elevs)*100)/100};
+    return {pour_point:{x:px,y:py,z:pz},contributing_vertices:contribVerts,area:Math.round(totalArea*100)/100,avg_slope:slopeVals.length?Math.round(slopeVals.reduce((a,b)=>a+b,0)/slopeVals.length*100)/100:0,max_elevation:Math.round(Math.max(...elevs)*100)/100,min_elevation:Math.round(Math.min(...elevs)*100)/100};
   }
 
   _triArea3d(t){
@@ -437,13 +453,15 @@ function generateSampleSurface(){
 // ============================================================
 // 법규 데이터 (REGULATION DATA)
 // ============================================================
+// 각 항목의 source는 근거 문서명. 근거가 실무 관행값인 항목은 명시적으로 표기하고, 실제 적용 전 프로젝트 시방 확인 필요.
 const REGULATIONS=[
-  {id:"KR-KBIMS-001",category:"korea_kbims",title:"Korea BIM Standard (KBIMS) - Surface Analysis Requirements",title_ko:"한국 BIM 표준 (KBIMS) - 지표면 분석 요구사항",description:"Mandates BIM-based terrain analysis for public projects over 50B KRW.",requirements:["TIN surface model with minimum LOD 200","Slope analysis with color-coded bands","Elevation labels with dynamic linking","Water drop analysis for drainage verification","Cut/Fill volume calculation"]},
-  {id:"KR-SMART-001",category:"korea_smart",title:"Smart Construction 2030 Roadmap - Digital Terrain",title_ko:"스마트건설 2030 로드맵 - 디지털 지형",description:"MOLIT roadmap requiring full BIM-based design by 2030.",requirements:["3D terrain model from survey data","Automated slope and elevation extraction","Digital drainage analysis","IFC export with terrain data","Cloud-based model sharing"]},
-  {id:"INT-ISO19650-001",category:"iso_19650",title:"ISO 19650:2026 - BIM Information Management",title_ko:"ISO 19650:2026 - BIM 정보 관리",description:"International standard for BIM information management.",requirements:["Information delivery planning","Level of Information Need specification","CDE for surface model sharing","Asset information model","Digital twin integration"]},
-  {id:"SG-CORENET-001",category:"singapore_corenet_x",title:"CORENET X - Automated Model Checking",title_ko:"CORENET X - 자동 모델 검토",description:"Singapore BCA mandatory IFC-SG submission with automated compliance.",requirements:["IFC-SG format submission","Slope gradient as IFC property","Max 50mm step at entrances","Drainage gradient min 1:80","Model Checker validation"]},
-  {id:"US-NBIMS-001",category:"usa_nbims_v4",title:"NBIMS-US V4 - National BIM Standard",title_ko:"NBIMS-US V4 - 국가 BIM 표준",description:"US national BIM standard V4 with modular PBR/BEP framework.",requirements:["PBR for terrain scope","BEP for surface analysis","COBie data structure","Elevation and slope attributes","Facility management data"]},
-  {id:"KR-DRAIN-001",category:"drainage_standards",title:"Korean Drainage Design Standards",title_ko:"한국 배수 설계 기준",description:"Minimum slope requirements for Korean civil engineering.",requirements:["General surface: min 1.0%","Road surface: min 1.5% cross-slope","Parking lot: min 1.0%","Walkway: max 8.0% longitudinal","Barrier-free ramp: max 8.33%","Pipe drainage: min 0.5%","Building perimeter: min 2.0%"]}
+  {id:"KR-KBIMS-001",category:"korea_kbims",title:"KBIMS & MOLIT BIM Guidelines - Surface Analysis",title_ko:"KBIMS 및 국토부 BIM 기본지침 - 지표면 분석",description:"KBIMS is a BIM standard framework by buildingSMART Korea; BIM mandates for large public projects are governed separately by MOLIT's Construction Industry BIM Basic Guidelines (phased mandate).",source:"국토교통부 건설산업 BIM 기본지침(2020)·시행지침 / buildingSMART Korea KBIMS",requirements:["TIN surface model with appropriate LOD per project BEP","Slope analysis with color-coded bands","Elevation labels with dynamic linking","Water drop analysis for drainage verification","Cut/Fill volume calculation"]},
+  {id:"KR-SMART-001",category:"korea_smart",title:"Smart Construction 2030 Roadmap - Digital Terrain",title_ko:"스마트건설 2030 로드맵 - 디지털 지형",description:"MOLIT roadmap targeting BIM-based design expansion by 2030.",source:"국토교통부 스마트건설 활성화 방안(2022)",requirements:["3D terrain model from survey data","Automated slope and elevation extraction","Digital drainage analysis","IFC export with terrain data","Cloud-based model sharing"]},
+  {id:"INT-ISO19650-001",category:"iso_19650",title:"ISO 19650 - BIM Information Management",title_ko:"ISO 19650 - BIM 정보 관리",description:"International standard series for information management using BIM.",source:"ISO 19650-1:2018, -2:2018, -3:2020, -4:2022, -5:2020",requirements:["Information delivery planning","Level of Information Need specification","CDE for surface model sharing","Asset information model","Security-minded information management (Part 5)"]},
+  {id:"SG-CORENET-001",category:"singapore_corenet_x",title:"CORENET X - Automated Model Checking",title_ko:"CORENET X - 자동 모델 검토",description:"Singapore BCA IFC-SG submission with automated compliance checking. Numeric thresholds below are reference values - verify against current BCA source documents before submission.",source:"BCA CORENET X / SG Code on Accessibility (참고값 - 원문 확인 필요)",requirements:["IFC-SG format submission","Slope gradient as IFC property","Drainage gradient reference min 1:80 (1.25%)","Ramp gradient reference max 1:12 (8.33%)","Model Checker validation"]},
+  {id:"US-NBIMS-001",category:"usa_nbims_v4",title:"NBIMS-US V4 - National BIM Standard",title_ko:"NBIMS-US V4 - 국가 BIM 표준",description:"US national BIM standard V4 with modular PBR/BEP framework (informational - no numeric slope limits defined).",source:"NIBS National BIM Standard-United States V4",requirements:["PBR for terrain scope","BEP for surface analysis","COBie data structure","Elevation and slope attributes","Facility management data"]},
+  {id:"KR-BF-001",category:"korea_barrier_free",title:"Korea Barrier-Free Act - Ramp Slope",title_ko:"장애인·노인·임산부 등 편의증진법 - 경사로 기준",description:"Accessible ramp slope limit of 1:12 (approx. 8.33%) under the Barrier-Free Act enforcement rules.",source:"장애인등편의법 시행규칙 별표1",requirements:["Ramp slope: max 1:12 (8.33%)","Level landing at top and bottom of ramp","Handrails per enforcement rule conditions"]},
+  {id:"KR-DRAIN-001",category:"drainage_standards",title:"Korean Drainage Design Practice",title_ko:"한국 배수 설계 실무기준",description:"Commonly applied minimum slope values in Korean civil practice. Values are practice-based references - confirm against each project's specifications.",source:"국내 배수설계 실무 관행값 (프로젝트별 시방 확인 필요)",requirements:["General surface: min 1.0%","Road surface: min 1.5% cross-slope","Parking lot: min 1.0%","Walkway: max 8.0% longitudinal","Pipe drainage: min 0.5%","Building perimeter: min 2.0%"]}
 ];
 
 function checkCompliance(slopePct, surfaceType, country){
@@ -454,16 +472,18 @@ function checkCompliance(slopePct, surfaceType, country){
     regs.push("KR-DRAIN-001");
     if(surfaceType==="general"){const p=slope>=1;checks.push({rule:"General surface drainage minimum slope",required:">= 1.0%",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Increase slope from ${slope.toFixed(2)}% to at least 1.0%.`);}}
     else if(surfaceType==="road"){const p=slope>=1.5;checks.push({rule:"Road surface minimum cross-slope",required:">= 1.5%",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Increase road cross-slope from ${slope.toFixed(2)}% to at least 1.5%.`);}}
-    else if(surfaceType==="barrier_free"){const p=slope<=8.33;checks.push({rule:"Barrier-free ramp maximum slope",required:"<= 8.33% (1:12)",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Reduce ramp slope from ${slope.toFixed(2)}% to maximum 8.33%.`);}}
+    else if(surfaceType==="walkway"){const p=slope<=8;checks.push({rule:"Walkway maximum longitudinal slope",required:"<= 8.0%",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Reduce walkway slope from ${slope.toFixed(2)}% to maximum 8.0%.`);}}
+    else if(surfaceType==="barrier_free"){regs.push("KR-BF-001");const p=slope<=8.33;checks.push({rule:"Barrier-free ramp maximum slope",required:"<= 8.33% (1:12)",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-BF-001"});if(!p){compliant=false;recs.push(`Reduce ramp slope from ${slope.toFixed(2)}% to maximum 8.33% (장애인등편의법 시행규칙).`);}}
     else if(surfaceType==="drainage"){const p=slope>=0.5;checks.push({rule:"Pipe drainage minimum slope",required:">= 0.5%",actual:slope.toFixed(2)+"%",passed:p,standard:"KR-DRAIN-001"});if(!p){compliant=false;recs.push(`Increase pipe slope from ${slope.toFixed(2)}% to at least 0.5%.`);}}
   }
   if(country==="singapore"||country==="all"){
     regs.push("SG-CORENET-001");
-    if(surfaceType==="general"||surfaceType==="drainage"){const p=slope>=1.25;checks.push({rule:"CORENET X surface drainage minimum",required:">= 1.25%",actual:slope.toFixed(2)+"%",passed:p,standard:"SG-CORENET-001"});if(!p){compliant=false;recs.push("Increase slope to >= 1.25% for CORENET X.");}}
-    if(surfaceType==="barrier_free"){const p=slope<=5;checks.push({rule:"CORENET X barrier-free max slope",required:"<= 5.0%",actual:slope.toFixed(2)+"%",passed:p,standard:"SG-CORENET-001"});if(!p){compliant=false;recs.push("Reduce slope to <= 5.0% per Singapore BCA.");}}
+    if(surfaceType==="general"||surfaceType==="drainage"){const p=slope>=1.25;checks.push({rule:"CORENET X surface drainage minimum (reference)",required:">= 1.25% (1:80)",actual:slope.toFixed(2)+"%",passed:p,standard:"SG-CORENET-001"});if(!p){compliant=false;recs.push("Increase slope to >= 1.25% (1:80) per CORENET X reference value.");}}
+    if(surfaceType==="barrier_free"){const p=slope<=8.33;checks.push({rule:"SG accessibility ramp max slope (reference 1:12)",required:"<= 8.33% (1:12)",actual:slope.toFixed(2)+"%",passed:p,standard:"SG-CORENET-001"});if(!p){compliant=false;recs.push("Reduce ramp slope to <= 8.33% (1:12); verify against current SG Code on Accessibility.");}}
   }
-  if(country==="usa"||country==="all"){regs.push("US-NBIMS-001");checks.push({rule:"NBIMS-US V4 terrain data in COBie",required:"Slope documented",actual:slope.toFixed(2)+"% documented",passed:true,standard:"US-NBIMS-001"});}
-  if(country==="international"||country==="all"){regs.push("INT-ISO19650-001");checks.push({rule:"ISO 19650 information delivery",required:"Slope in CDE",actual:slope.toFixed(2)+"% recorded",passed:true,standard:"INT-ISO19650-001"});}
+  // 아래 두 항목은 수치 기준이 없는 정보성(informational) 항목 — 적합 판정에 포함하지 않음
+  if(country==="usa"||country==="all"){regs.push("US-NBIMS-001");checks.push({rule:"NBIMS-US V4 terrain data in COBie (informational)",required:"No numeric limit - slope documented",actual:slope.toFixed(2)+"% documented",passed:true,informational:true,standard:"US-NBIMS-001"});}
+  if(country==="international"||country==="all"){regs.push("INT-ISO19650-001");checks.push({rule:"ISO 19650 information delivery (informational)",required:"No numeric limit - slope in CDE",actual:slope.toFixed(2)+"% recorded",passed:true,informational:true,standard:"INT-ISO19650-001"});}
   if(!recs.length) recs.push("All applicable slope requirements are met.");
   return {is_compliant:compliant,checks,applicable_regulations:regs,recommendations:recs};
 }
@@ -474,51 +494,50 @@ function checkCompliance(slopePct, surfaceType, country){
 const SCRIPT_TEMPLATES={
 dynamo:{name:"Dynamo (Revit)",language:"Python (IronPython/CPython3)",ext:".dyn.py",
 code:(sn)=>`# Dynamo Python Script Node
-# BIM Slope & EL Automation - Steps 1-6
+# BIM Slope & EL Automation - Step 1-2 (표고 추출 / 경사 계산)
 # Surface: ${sn}
+# 주의: 미검증 초안 - 사용 중인 Dynamo/Revit 버전에서 실행 검증 후 사용하세요.
 
 import clr
-clr.AddReference("RevitAPI")
-clr.AddReference("RevitServices")
 clr.AddReference("ProtoGeometry")
-
-from Autodesk.DesignScript.Geometry import *
-from RevitServices.Persistence import DocumentManager
-from RevitServices.Transactions import TransactionManager
+from Autodesk.DesignScript.Geometry import Point, Vector
 import math
 
-doc = DocumentManager.Instance.CurrentDBDocument
+# IN[0]: Dynamo Surface, IN[1]: Point 또는 Point 리스트
+surface = IN[0]
+points = IN[1] if isinstance(IN[1], list) else [IN[1]]
 
-# Step 1: Extract Elevation Points
-def get_surface_elevation(surface, point):
+# Step 1: 표고 추출 - Geometry.Project로 점을 지표면에 수직 투영
+def get_surface_elevation(surf, pt):
     try:
-        projected = surface.ProjectPoint(point)
-        return projected.Z
-    except:
+        proj = pt.Project(surf, Vector.ZAxis().Reverse())
+        return proj[0].Z if proj else None
+    except Exception:
         return None
 
-# Step 2: Calculate Slope Between Two Points
-def calculate_slope(pt_a, pt_b, use_3d=False):
+# Step 2: 두 점 사이 경사 (경사도%와 각도는 수평거리 기준)
+def calculate_slope(pt_a, pt_b):
     dx = pt_b.X - pt_a.X
     dy = pt_b.Y - pt_a.Y
     dz = pt_b.Z - pt_a.Z
     h_dist = math.sqrt(dx**2 + dy**2)
-    run = math.sqrt(dx**2 + dy**2 + dz**2) if use_3d else h_dist
-    if run < 0.001: return None
-    return {"slope_pct": round((dz/run)*100, 3), "slope_deg": round(math.degrees(math.atan2(dz, run)), 3)}
+    if h_dist < 0.001: return None
+    return {"slope_pct": round((dz/h_dist)*100, 3),
+            "slope_deg": round(math.degrees(math.atan2(dz, h_dist)), 3)}
 
-OUT = {"status": "Script ready for execution", "surface": "${sn}"}`,
-instructions:["1. Open Dynamo in Revit (Manage > Dynamo)","2. Create a new Dynamo script","3. Add a 'Python Script' node","4. Paste the generated code","5. Connect surface and point inputs","6. Run the script"]},
+OUT = [get_surface_elevation(surface, p) for p in points]`,
+instructions:["1. Open Dynamo in Revit (Manage > Dynamo)","2. Create a new Dynamo script","3. Add a 'Python Script' node with two inputs (IN[0]: Surface, IN[1]: Points)","4. Paste the generated code","5. Run and verify OUT elevations against known points (미검증 초안 - 검증 필수)"]},
 
 revit_csharp:{name:"Revit C# Add-in",language:"C#",ext:".cs",
 code:(sn)=>`// BIM Slope & EL Automation - Revit C# Add-in
 // Surface: ${sn}
 
+// 대상: Revit 2024+ (TopographySurface는 2024부터 Toposolid로 대체·지원 중단)
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.Attributes;
 
@@ -530,25 +549,28 @@ namespace BIMSlopeELAutomation
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             Document doc = commandData.Application.ActiveUIDocument.Document;
-            TopographySurface topo = new FilteredElementCollector(doc)
-                .OfClass(typeof(TopographySurface)).FirstElement() as TopographySurface;
-            if (topo == null) { TaskDialog.Show("Error", "No topography surface found."); return Result.Failed; }
+            Toposolid topo = new FilteredElementCollector(doc)
+                .OfClass(typeof(Toposolid)).FirstElement() as Toposolid;
+            if (topo == null) { TaskDialog.Show("Error", "No toposolid found (requires Revit 2024+)."); return Result.Failed; }
 
-            // Step 1: Extract elevations
-            IList<XYZ> pts = topo.GetPoints();
-            
-            // Step 2: Calculate slope
+            // Step 1: Extract elevation points from the toposolid's slab shape editor
+            SlabShapeEditor editor = topo.GetSlabShapeEditor();
+            List<XYZ> pts = editor.SlabShapeVertices.Cast<SlabShapeVertex>()
+                .Select(v => v.Position).ToList();
+            if (pts.Count == 0) { TaskDialog.Show("Error", "Toposolid has no shape vertices."); return Result.Failed; }
+
+            // Step 2: Calculate slope (percent, horizontal-run based)
             double CalcSlope(XYZ a, XYZ b) {
                 double h = Math.Sqrt(Math.Pow(b.X-a.X,2)+Math.Pow(b.Y-a.Y,2));
                 return h > 0.001 ? ((b.Z-a.Z)/h)*100 : 0;
             }
-            
+
             TaskDialog.Show("BIM Slope & EL", $"Surface: {pts.Count} points\\nMin EL: {pts.Min(p=>p.Z):F2}\\nMax EL: {pts.Max(p=>p.Z):F2}");
             return Result.Succeeded;
         }
     }
 }`,
-instructions:["1. Create C# Class Library in Visual Studio","2. Add RevitAPI.dll, RevitAPIUI.dll references","3. Paste the generated code","4. Build the project"]},
+instructions:["1. Create C# Class Library in Visual Studio (Revit 2024+ API)","2. Add RevitAPI.dll, RevitAPIUI.dll references","3. Paste the generated code","4. Build the project (Revit 2023 이하는 TopographySurface API로 별도 대응 필요)"]},
 
 civil3d_python:{name:"Civil 3D Python",language:"Python",ext:".py",
 code:(sn)=>`# Civil 3D Python Automation Script
@@ -556,29 +578,44 @@ code:(sn)=>`# Civil 3D Python Automation Script
 
 import math
 try:
-    import win32com.client
+    import win32com.client  # pip install pywin32
     acad = win32com.client.Dispatch("AutoCAD.Application")
     doc = acad.ActiveDocument
     CIVIL3D = True
-except: CIVIL3D = False
+except Exception:
+    CIVIL3D = False
+
+def get_civil_app(document):
+    # Civil 3D 버전별로 COM ProgID 접미사가 다름 (예: 2024=13.6, 2025=13.7)
+    for prog_id in ("AeccXUiLand.AeccApplication.13.7",
+                    "AeccXUiLand.AeccApplication.13.6",
+                    "AeccXUiLand.AeccApplication.13.5",
+                    "AeccXUiLand.AeccApplication"):
+        try:
+            return document.GetInterfaceObject(prog_id)
+        except Exception:
+            continue
+    return None
 
 class SlopeELAutomation:
     def __init__(self, surface_name="${sn}"):
         self.surface_name = surface_name
         self.surface = None
         if CIVIL3D: self._connect()
-    
+
     def _connect(self):
-        civil = doc.GetInterfaceObject("AeccXUiLand.AeccApplication")
+        civil = get_civil_app(doc)
+        if civil is None:
+            raise RuntimeError("Civil 3D COM interface not found - check version ProgID")
         self.surface = civil.ActiveDocument.Surfaces.Item(self.surface_name)
-    
+
     # Step 1: Elevation
     def get_elevation(self, x, y):
         if self.surface: return round(self.surface.FindElevationAtXY(x, y), 3)
 
 auto = SlopeELAutomation()
 print(f"Connected to surface: {auto.surface_name}")`,
-instructions:["1. Install pyautocad: pip install pyautocad","2. Open Civil 3D with a surface model","3. Run the script via Python console"]},
+instructions:["1. Install pywin32: pip install pywin32","2. Open Civil 3D with a surface model","3. Run the script via Python console (버전별 ProgID는 코드 내 목록 참고)"]},
 
 civil3d_csharp:{name:"Civil 3D C#",language:"C#",ext:".cs",
 code:(sn)=>`// Civil 3D C# Plugin - BIM Slope & EL Automation
@@ -714,7 +751,7 @@ function drawCanvas(){
   if(activeStep===5&&catchments.length>0){
     for(const c of catchments){
       ctx.fillStyle='rgba(34,211,238,0.15)';
-      for(const p of c.boundary_points){
+      for(const p of c.contributing_vertices){
         ctx.beginPath();ctx.arc(sx(p.x),sy(p.y),4,0,Math.PI*2);ctx.fill();
       }
       ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(sx(c.pour_point.x),sy(c.pour_point.y),6,0,Math.PI*2);ctx.fill();
@@ -913,9 +950,9 @@ function renderPanel(){
   else if(activeStep===2){
     let resultHTML='';
     if(slopeResult){
-      resultHTML=`<div class="mb-3">${rc('Slope (%)','<span class="highlight">${slopeResult.slope_percentage.toFixed(3)}%</span>',true)}${rc('Slope Ratio',slopeResult.slope_ratio)}${rc('Slope (degrees)',slopeResult.slope_degrees.toFixed(3)+'\u00b0')}${rc('Horizontal Distance',slopeResult.horizontal_distance_2d.toFixed(3)+'m')}${rc('3D Distance',slopeResult.distance_3d.toFixed(3)+'m')}${rc('Elevation Diff',slopeResult.elevation_difference.toFixed(3)+'m')}${rc('Direction',slopeResult.direction)}</div><div class="arrow-info">↘️ Arrow angle: ${(slopeResult.direction_arrow_angle*180/Math.PI).toFixed(1)}\u00b0 (forced downhill)</div>`.replace('${slopeResult.slope_percentage.toFixed(3)}',slopeResult.slope_percentage.toFixed(3));
+      resultHTML=`<div class="mb-3">${rc('Slope (%)',slopeResult.slope_percentage.toFixed(3)+'%',true)}${rc('Slope Ratio',slopeResult.slope_ratio)}${rc('Slope (degrees)',slopeResult.slope_degrees.toFixed(3)+'\u00b0')}${rc('Horizontal Distance',slopeResult.horizontal_distance_2d.toFixed(3)+'m')}${rc('3D Distance',slopeResult.distance_3d.toFixed(3)+'m')}${rc('Elevation Diff',slopeResult.elevation_difference.toFixed(3)+'m')}${rc('Direction',slopeResult.direction)}</div><div class="arrow-info">↘️ Arrow angle: ${(slopeResult.direction_arrow_angle*180/Math.PI).toFixed(1)}\u00b0 (downhill azimuth, 0\u00b0=+X CCW)</div>`;
     }
-    panel.innerHTML=`<h2>Step 2: Slope Calculation & Direction Arrow</h2><p class="subtitle">경사도 산출 및 화살표</p><p class="desc">Click two points on the surface to calculate slope between them.</p><p style="font-size:13px;margin-bottom:8px"><span style="color:#22d3ee;font-weight:500">Point A:</span> ${slopePointA?`(${slopePointA.x.toFixed(2)}, ${slopePointA.y.toFixed(2)})`:'Click to set'} &nbsp; <span style="color:#f59e0b;font-weight:500">Point B:</span> ${slopePointB?`(${slopePointB.x.toFixed(2)}, ${slopePointB.y.toFixed(2)})`:'Click to set'}</p><label class="checkbox-label mb-2"><input type="checkbox" ${use3dLength?'checked':''} onchange="use3dLength=this.checked"> Use 3D distance</label><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runSlope()" ${!slopePointA||!slopePointB?'disabled':''}>Calculate Slope</button><button class="btn btn-secondary" onclick="slopePointA=null;slopePointB=null;slopeResult=null;drawCanvas();renderPanel();">Clear</button></div>${resultHTML}`;
+    panel.innerHTML=`<h2>Step 2: Slope Calculation & Direction Arrow</h2><p class="subtitle">경사도 산출 및 화살표</p><p class="desc">Click two points on the surface to calculate slope between them.</p><p style="font-size:13px;margin-bottom:8px"><span style="color:#22d3ee;font-weight:500">Point A:</span> ${slopePointA?`(${slopePointA.x.toFixed(2)}, ${slopePointA.y.toFixed(2)})`:'Click to set'} &nbsp; <span style="color:#f59e0b;font-weight:500">Point B:</span> ${slopePointB?`(${slopePointB.x.toFixed(2)}, ${slopePointB.y.toFixed(2)})`:'Click to set'}</p><label class="checkbox-label mb-2"><input type="checkbox" ${use3dLength?'checked':''} onchange="use3dLength=this.checked"> Use 3D (slope) length for ratio</label><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runSlope()" ${!slopePointA||!slopePointB?'disabled':''}>Calculate Slope</button><button class="btn btn-secondary" onclick="slopePointA=null;slopePointB=null;slopeResult=null;drawCanvas();renderPanel();">Clear</button></div>${resultHTML}`;
   }
   else if(activeStep===3){
     let pathsHTML='';
@@ -935,19 +972,19 @@ function renderPanel(){
   else if(activeStep===5){
     let catchHTML='';
     if(catchments.length>0){
-      catchHTML=catchments.map((c,i)=>`<div class="path-card"><h4>📍 Catchment ${i+1}</h4><div class="mb-2">${rc('Area',c.area.toFixed(2)+' m²')}${rc('Avg Slope',c.avg_slope.toFixed(2)+'°')}${rc('Elevation Range',`${c.min_elevation.toFixed(2)}m ~ ${c.max_elevation.toFixed(2)}m`)}${rc('Boundary Points',c.boundary_points.length.toString())}</div></div>`).join('');
+      catchHTML=catchments.map((c,i)=>`<div class="path-card"><h4>📍 Catchment ${i+1}</h4><div class="mb-2">${rc('Area',c.area.toFixed(2)+' m²')}${rc('Avg Slope',c.avg_slope.toFixed(2)+'°')}${rc('Elevation Range',`${c.min_elevation.toFixed(2)}m ~ ${c.max_elevation.toFixed(2)}m`)}${rc('Contributing Vertices',c.contributing_vertices.length.toString())}</div></div>`).join('');
     }
     panel.innerHTML=`<h2>Step 5: Catchment Area</h2><p class="subtitle">유역면적</p><p class="desc">Click pour points to delineate watershed areas.</p><div class="flex gap-2 mb-3"><button class="btn btn-primary" onclick="runCatchment()" ${pourPoints.length===0?'disabled':''}>Delineate Catchment (${pourPoints.length} points)</button><button class="btn btn-secondary" onclick="pourPoints=[];catchments=[];drawCanvas();renderPanel();">Clear</button></div>${catchHTML}`;
   }
   else if(activeStep===6){
     let compHTML='';
     if(complianceResult){
-      compHTML=`<div class="mb-3"><div class="result-card"><span class="label">Overall Compliance</span><span class="value ${complianceResult.is_compliant?'pass':'fail'}" style="font-weight:700;font-size:15px">${complianceResult.is_compliant?'✅ COMPLIANT':'❌ NON-COMPLIANT'}</span></div></div><div class="mb-3">${complianceResult.checks.map(ck=>`<div class="compliance-check"><span class="icon ${ck.passed?'pass':'fail'}">${ck.passed?'✓':'✗'}</span><div><div style="font-weight:500">${ck.rule}</div><div style="font-size:11px;color:#94a3b8">Required: ${ck.required} | Actual: ${ck.actual} | Standard: ${ck.standard}</div></div></div>`).join('')}</div>${complianceResult.recommendations.length?`<div class="warn-box"><h4>Recommendations</h4><ul>${complianceResult.recommendations.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}`;
+      compHTML=`<div class="mb-3"><div class="result-card"><span class="label">Overall Compliance</span><span class="value ${complianceResult.is_compliant?'pass':'fail'}" style="font-weight:700;font-size:15px">${complianceResult.is_compliant?'✅ COMPLIANT':'❌ NON-COMPLIANT'}</span></div></div><div class="mb-3">${complianceResult.checks.map(ck=>`<div class="compliance-check"><span class="icon ${ck.informational?'':(ck.passed?'pass':'fail')}" ${ck.informational?'style="color:#94a3b8"':''}>${ck.informational?'ℹ️':(ck.passed?'✓':'✗')}</span><div><div style="font-weight:500">${ck.rule}</div><div style="font-size:11px;color:#94a3b8">Required: ${ck.required} | Actual: ${ck.actual} | Standard: ${ck.standard}</div></div></div>`).join('')}</div>${complianceResult.recommendations.length?`<div class="warn-box"><h4>Recommendations</h4><ul>${complianceResult.recommendations.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}`;
     }
     let regsHTML=REGULATIONS.map(r=>`<div class="reg-card"><div class="title">${r.title}</div><div class="ko">${r.title_ko}</div><div class="desc">${r.description}</div></div>`).join('');
     
     // Bug Fix 2: Add IDs to inputs so we can query them dynamically instead of relying purely on events
-    panel.innerHTML=`<h2>Step 6: Regulations & Compliance</h2><p class="subtitle">법규 검토</p><div class="mb-3"><div class="form-row"><label>Slope (%)</label><input type="number" id="slopeInput" value="${slopeForCompliance}" step="0.1"></div><div class="flex gap-2"><div class="form-row" style="flex:1"><label>Surface Type</label><select id="typeInput"><option value="road" ${surfaceType==='road'?'selected':''}>Road</option><option value="general" ${surfaceType==='general'?'selected':''}>General Surface</option><option value="barrier_free" ${surfaceType==='barrier_free'?'selected':''}>Barrier-free Ramp</option><option value="drainage" ${surfaceType==='drainage'?'selected':''}>Pipe Drainage</option></select></div><div class="form-row" style="flex:1"><label>Country</label><select id="countryInput"><option value="korea" ${country==='korea'?'selected':''}>Korea</option><option value="singapore" ${country==='singapore'?'selected':''}>Singapore</option><option value="usa" ${country==='usa'?'selected':''}>USA</option><option value="international" ${country==='international'?'selected':''}>International</option><option value="all" ${country==='all'?'selected':''}>All</option></select></div></div><div class="flex gap-2 mt-2"><button class="btn btn-primary" onclick="runCompliance()">🛡️ Check Compliance</button><button class="btn btn-secondary" onclick="complianceResult=null;renderPanel();">Clear</button></div></div>${compHTML}<h4 style="font-size:13px;font-weight:600;color:#e2e8f0;margin:12px 0 6px">Regulation Database (${REGULATIONS.length} entries)</h4><div class="scroll-box">${regsHTML}</div>`;
+    panel.innerHTML=`<h2>Step 6: Regulations & Compliance</h2><p class="subtitle">법규 검토</p><div class="mb-3"><div class="form-row"><label>Slope (%)</label><input type="number" id="slopeInput" value="${slopeForCompliance}" step="0.1"></div><div class="flex gap-2"><div class="form-row" style="flex:1"><label>Surface Type</label><select id="typeInput"><option value="road" ${surfaceType==='road'?'selected':''}>Road</option><option value="general" ${surfaceType==='general'?'selected':''}>General Surface</option><option value="walkway" ${surfaceType==='walkway'?'selected':''}>Walkway</option><option value="barrier_free" ${surfaceType==='barrier_free'?'selected':''}>Barrier-free Ramp</option><option value="drainage" ${surfaceType==='drainage'?'selected':''}>Pipe Drainage</option></select></div><div class="form-row" style="flex:1"><label>Country</label><select id="countryInput"><option value="korea" ${country==='korea'?'selected':''}>Korea</option><option value="singapore" ${country==='singapore'?'selected':''}>Singapore</option><option value="usa" ${country==='usa'?'selected':''}>USA</option><option value="international" ${country==='international'?'selected':''}>International</option><option value="all" ${country==='all'?'selected':''}>All</option></select></div></div><div class="flex gap-2 mt-2"><button class="btn btn-primary" onclick="runCompliance()">🛡️ Check Compliance</button><button class="btn btn-secondary" onclick="complianceResult=null;renderPanel();">Clear</button></div></div>${compHTML}<h4 style="font-size:13px;font-weight:600;color:#e2e8f0;margin:12px 0 6px">Regulation Database (${REGULATIONS.length} entries)</h4><div class="scroll-box">${regsHTML}</div>`;
   }
   else if(activeStep===7){
     const tmpl=SCRIPT_TEMPLATES[selectedPlatform];
